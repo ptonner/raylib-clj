@@ -1,0 +1,4 @@
+{:paths ["src" "lib"]
+ :deps {org.suskalo/coffi {:mvn/version "0.5.357"}}
+ :aliases {:dev {:jvm-opts ["--add-modules=jdk.incubator.foreign"
+                            "--enable-native-access=ALL-UNNAMED"]}}}
