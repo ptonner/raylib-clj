@@ -7,8 +7,11 @@
         W 800]
     (rl/init-window W H "raylib [core] example - basic window")
     (rl/set-target-fps 60)
-    (while (not (rl/window-should-close))
+    (while (not (rl/window-should-close?))
       (rl/begin-drawing)
-      ;; (rl/clear-background rl/)
+      (rl/clear-background rl/raywhite)
       (rl/end-drawing))
-    (rl/close-window)))
+    (rl/close-window))
+
+  ;; eject!
+  (rl/close-window))
