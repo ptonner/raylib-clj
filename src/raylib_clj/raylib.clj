@@ -12,9 +12,30 @@
 
 (defmethod mem/deserialize* ::bool [obj _type] (not (zero? obj)))
 
-(defalias ::Color
-          [::mem/struct
-           [[:r ::mem/char] [:g ::mem/char] [:b ::mem/char] [:a ::mem/char]]])
+;; Structs
+
+(comment (tap> (ns-publics 'coffi.mem)) (tap> ::mem/struct))
+
+;; (defalias ::Color
+;;           [::mem/struct
+;;            [[:r ::mem/char] [:g ::mem/char] [:b ::mem/char] [:a
+;;            ::mem/char]]])
+
+(defalias :raylib-clj.raylib/Color
+          [:coffi.mem/struct
+           [[:r :coffi.mem/char] [:g :coffi.mem/char] [:b :coffi.mem/char]
+            [:a :coffi.mem/char]]])
+
+(defalias :raylib-clj.raylib/Rectangle
+          [:coffi.mem/struct
+           [[:x :coffi.mem/float] [:y :coffi.mem/float]
+            [:width :coffi.mem/float] [:height :coffi.mem/float]]])
+
+;; (defalias :raylib-clj.raylib/Image
+;;   [:coffi.mem/struct
+;;    [[:*data :coffi.mem/void] [:width :coffi.mem/int]
+;;     [:height :coffi.mem/int] [:mipmaps :coffi.mem/int]
+;;     [:format :coffi.mem/int]]])
 
 ;; Constants
 

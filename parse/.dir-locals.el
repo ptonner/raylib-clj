@@ -1,2 +1,2 @@
 ((clojure-mode
-  (cider-clojure-cli-aliases . ":dev:parse")))
+  (cider-clojure-cli-aliases . ":dev:parse:reveal")))
