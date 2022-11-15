@@ -4,13 +4,34 @@
 
 (ffi/load-library "lib/libraylib.so")
 
-;; Util
+;; Util -----------------------------------------------------------------------
 
+;; Bool
 (defmethod mem/primitive-type ::bool [_type] ::mem/int)
-
 (defmethod mem/serialize* ::bool [obj _type _scope] (int (if obj 1 0)))
-
 (defmethod mem/deserialize* ::bool [obj _type] (not (zero? obj)))
+
+;; Unsigned primitives
+(defalias ::unsigned-char ::mem/char); chars are already unsigned (?)
+
+(defmethod mem/primitive-type ::unsigned-int [_type] ::mem/int)
+(defmethod mem/serialize* ::unsigned-int [obj _type _scope] (unchecked-int obj))
+(defmethod mem/deserialize* ::unsigned-int
+  [obj _type]
+  (Integer/toUnsignedLong obj))
+
+(defmethod mem/primitive-type ::unsigned-short [_type] ::mem/short)
+(defmethod mem/serialize* ::unsigned-short
+  [obj _type _scope]
+  (unchecked-short obj))
+(defmethod mem/deserialize* ::unsigned-short
+  [obj _type]
+  (Short/toUnsignedInt obj))
+
+(comment (let [val (+ 1 (int (Short/MAX_VALUE)))
+               uval (unchecked-short val)]
+           (tap> [(Short/toUnsignedInt uval) val]))
+         (tap> (mem/c-layout ::unsigned-int)))
 
 ;; Structs
 
@@ -25,6 +46,8 @@
           [::mem/struct
            [[:x ::mem/float] [:y ::mem/float] [:z ::mem/float]
             [:w ::mem/float]]])
+
+(defalias ::Quaternion ::Vector4)
 
 (defalias ::Color
           [::mem/struct
