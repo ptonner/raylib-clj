@@ -28,14 +28,16 @@
   [obj _type]
   (Short/toUnsignedInt obj))
 
-(comment (let [val (+ 1 (int (Short/MAX_VALUE)))
-               uval (unchecked-short val)]
-           (tap> [(Short/toUnsignedInt uval) val]))
+(comment (let [val (+ 1 (int (Integer/MAX_VALUE)))]
+           (tap> [val
+                  (mem/deserialize (mem/serialize val ::unsigned-int)
+                                   ::unsigned-int)]))
          (tap> (mem/c-layout ::unsigned-int)))
 
 ;; Structs
 
-(comment (tap> (ns-publics 'coffi.mem)) (tap> ::mem/struct))
+(comment (tap> (ns-publics 'coffi.mem))
+         (tap> (mem/c-layout [::mem/struct [[:x ::mem/float]]])))
 
 (defalias ::Vector2 [::mem/struct [[:x ::mem/float] [:y ::mem/float]]])
 
@@ -49,6 +51,21 @@
 
 (defalias ::Quaternion ::Vector4)
 
+(defalias
+  ;; Matrix, 4x4 components, column major, OpenGL style, right handed
+  ::Matrix
+  [::mem/struct
+   [;; Matrix first row (4 components)
+    [:m0 ::mem/float] [:m4 ::mem/float] [:m8 ::mem/float] [:m12 ::mem/float]
+    ;; Matrix second row (4 components)
+    [:m1 ::mem/float] [:m5 ::mem/float] [:m9 ::mem/float] [:m13 ::mem/float]
+    ;; Matrix third row (4 components)
+    [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
+    ;; Matrix fourth row (4 components)
+    [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float] [:m15 ::mem/float]]])
+
+(comment (tap> (mem/c-layout ::Matrix)))
+
 (defalias ::Color
           [::mem/struct
            [[:r ::mem/char] [:g ::mem/char] [:b ::mem/char] [:a ::mem/char]]])
@@ -57,6 +74,200 @@
           [::mem/struct
            [[:x ::mem/float] [:y ::mem/float] [:width ::mem/float]
             [:height ::mem/float]]])
+
+(defalias ::Image
+          [::mem/struct
+           [[:data ::mem/pointer] [:width ::mem/int] [:height ::mem/int]
+            [:mipmaps ::mem/int] [:format ::mem/int]]])
+
+(defalias ::Texture
+          [::mem/struct
+           [[:id ::unsigned-int] [:width ::mem/int] [:height ::mem/int]
+            [:mipmaps ::mem/int] [:format ::mem/int]]])
+
+(defalias ::Texture2D ::Texture)
+(defalias ::TextureCubemap ::Texture)
+
+(defalias ::RenderTexture
+          [::mem/struct
+           [[:id ::unsigned-int] [:texture ::Texture] [:depth ::Texture]]])
+
+(defalias ::RenderTexture2D ::RenderTexture)
+
+(defalias ::NPatchInfo
+          [::mem/struct
+           [[:source ::Rectangle] [:left ::mem/int] [:top ::mem/int]
+            [:right ::mem/int] [:bottom ::mem/int] [:layout ::mem/int]]])
+
+(defalias ::GlyphInfo
+          [::mem/struct
+           [[:value ::mem/int] [:offsetX ::mem/int] [:offsetY ::mem/int]
+            [:advanceX ::mem/int] [:image ::Image]]])
+
+(defalias
+  ::Font
+  [::mem/struct
+   [[:baseSize ::mem/int] [:glyphCount ::mem/int] [:glyphPadding ::mem/int]
+    [:texture ::Texture2D] [:recs [::mem/pointer ::Rectangle]]
+    [:glyphs [::mem/pointer ::GlyphInfo]]]])
+
+(defalias ::Camera3D
+          [::mem/struct
+           [[:position ::Vector3] [:target ::Vector3] [:up ::Vector3]
+            [:fovy ::mem/float] [:projection ::mem/int]]])
+
+(defalias ::Camera ::Camera3D)
+
+(defalias ::Camera2D
+          [::mem/struct
+           [[:offset ::Vector2] [:target ::Vector2] [:rotation ::mem/float]
+            [:zoom ::mem/float]]])
+
+(defalias ::Mesh
+          [::mem/struct
+           [[:vertexCount ::mem/int] [:triangleCount ::mem/int]
+            [:vertices [::mem/pointer ::mem/float]]
+            [:texcoords [::mem/pointer ::mem/float]]
+            [:texcoords2 [::mem/pointer ::mem/float]]
+            [:normals [::mem/pointer ::mem/float]]
+            [:tangents [::mem/pointer ::mem/float]]
+            [:colors [::mem/pointer ::unsigned-char]]
+            [:indices [::mem/pointer ::unsigned-short]]
+            [:animVertices [::mem/pointer ::mem/float]]
+            [:animNormals [::mem/pointer ::mem/float]]
+            [:boneIds [::mem/pointer ::unsigned-char]]
+            [:boneWeights [::mem/pointer ::mem/float]] [:vaoId ::unsigned-int]
+            [:vboId [::mem/pointer ::unsigned-int]]]])
+
+(defalias ::Shader [::mem/struct [[:id ::mem/int] [:locs ::mem/pointer]]])
+
+
+;; (defcfn begin-shader-mode
+;;   "Begin custom shader drawing"
+;;   ;; BeginShaderMode
+;;   UnloadShader
+;;   [::Shader]
+;;   ::mem/void)
+
+
+;; TODO: (de)serialize shader
+
+(comment
+  (tap> (clojure.spec.alpha/conform
+          ::ffi/defcfn-args
+          '(begin-shader-mode "Begin custom shader drawing"
+                              BeginShaderMode
+                              [::Shader]
+                              ::mem/void)))
+  (tap> (#'ffi/function-descriptor [::Shader] ::mem/void))
+  (tap> (.argumentLayouts (#'ffi/function-descriptor [::Shader] ::mem/void)))
+  (tap> (#'ffi/function-descriptor
+         [[::mem/struct [[:id ::mem/int] [:locs ::mem/pointer]]]]
+         ::mem/void))
+  (tap> (ffi/find-symbol 'BeginShaderMode))
+  (tap> (#'ffi/downcall-handle
+         (ffi/find-symbol 'BeginShaderMode)
+         (#'ffi/function-descriptor [::Shader] ::mem/void))))
+
+(comment (defcfn begin-shader-mode
+                 "Begin custom shader drawing"
+                 BeginShaderMode
+                 [::Shader]
+                 ::mem/void))
+
+
+(defalias ::MaterialMap
+          [::mem/struct
+           [[:texture ::Texture2D] [:color ::Color] [:value ::mem/float]]])
+
+(defalias ::Material
+          [::mem/struct
+           [[:shader ::Shader] [:maps [::mem/pointer ::MaterialMap]]
+            [:params [::mem/array ::mem/float 4]]]])
+
+(defalias ::BoneInfo
+          [::mem/struct
+           [[:name [::mem/array ::mem/char 32]] [:parent ::mem/int]]])
+
+(defalias
+  ::Model
+  [::mem/struct
+   [[:transform ::Matrix] [:meshCount ::mem/int] [:materialCount ::mem/int]
+    [:meshes [::mem/pointer ::Mesh]] [:materials [::mem/pointer ::Material]]
+    [:meshMaterial [::mem/pointer ::mem/int]] [:boneCount ::mem/int]
+    [:bones [::mem/pointer ::BoneInfo]]
+    [:bindPose [::mem/pointer ::Transform]]]])
+
+(defalias ::ModelAnimation
+          [::mem/struct
+           [[:boneCount ::mem/int] [:frameCount ::mem/int]
+            [:bones [::mem/pointer ::BoneInfo]]
+            [:framePoses [::mem/pointer [::mem/pointer ::Transform]]]]])
+
+(defalias ::Transform
+          [::mem/struct
+           [[:translation ::Vector3] [:rotation ::Quaternion]
+            [:scale ::Vector3]]])
+
+(defalias ::Ray [::mem/struct [[:position ::Vector3] [:direction ::Vector3]]])
+
+(defalias ::RayCollision
+          [::mem/struct
+           [[:hit ::bool] [:distance ::mem/float] [:point ::Vector3]
+            [:normal ::Vector3]]])
+
+(defalias ::BoundingBox [::mem/struct [[:min ::Vector3] [:max ::Vector3]]])
+
+(defalias ::Wave
+          [::mem/struct
+           [[:frameCount ::unsigned-int] [:sampleRate ::unsigned-int]
+            [:sampleSize ::unsigned-int] [:channels ::unsigned-int]
+            [:data ::mem/pointer]]])
+
+;; TODO: add sound support (needs rAudioBuffer and rAudioProcessor)
+;; (defalias
+;;   ::AudioStream
+;;   [::mem/struct
+;;    [[:buffer [::mem/pointer ::rAudioBuffer]]
+;;     [:processor [::mem/pointer ::rAudioProcessor]] [:sampleRate
+;;     ::unsigned-int]
+;;     [:sampleSize ::unsigned-int] [:channels ::unsigned-int]]])
+
+;; (defalias ::Sound
+;;           [::mem/struct [[:stream ::AudioStream] [:frameCount
+;;           ::unsigned-int]]])
+
+;; (defalias ::Music
+;;           [::mem/struct
+;;            [[:stream ::AudioStream] [:frameCount ::unsigned-int]
+;;             [:looping ::bool] [:ctxType ::mem/int] [:ctxData
+;;             ::mem/pointer]]])
+
+(defalias
+  ::VrDeviceInfo
+  [::mem/struct
+   [[:hResolution ::mem/int] [:vResolution ::mem/int] [:hScreenSize ::mem/float]
+    [:vScreenSize ::mem/float] [:vScreenCenter ::mem/float]
+    [:eyeToScreenDistance ::mem/float] [:lensSeparationDistance ::mem/float]
+    [:interpupillaryDistance ::mem/float]
+    [:lensDistortionValues [::mem/array ::mem/float 4]]
+    [:chromaAbCorrection [::mem/array ::mem/float 4]]]])
+
+(defalias ::VrStereoConfig
+          [::mem/struct
+           [[:projection [::mem/array ::Matrix 2]]
+            [:viewOffset [::mem/array ::Matrix 2]]
+            [:leftLensCenter [::mem/array ::mem/float 2]]
+            [:rightLensCenter [::mem/array ::mem/float 2]]
+            [:leftScreenCenter [::mem/array ::mem/float 2]]
+            [:rightScreenCenter [::mem/array ::mem/float 2]]
+            [:scale [::mem/array ::mem/float 2]]
+            [:scaleIn [::mem/array ::mem/float 2]]]])
+
+(defalias ::FilePathList
+          [::mem/struct
+           [[:capacity ::unsigned-int] [:count ::unsigned-int]
+            [:paths [::mem/pointer ::mem/c-string]]]])
 
 (comment (tap> (mem/deserialize
                  (mem/serialize {:x 0.0, :y 100.0, :width 100.0, :height 100.0}
