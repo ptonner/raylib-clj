@@ -42,8 +42,24 @@
                              ->defcfn)
                        (:functions api)))))
 
+(defn ->defstruct [{:keys [name description fields]}]
+  (let [cname (->raylib-keyword name)]
+    `(~'defalias ~cname
+      (~'layout/with-c-layout
+       [::mem/struct
+        [~@(map #(vector (keyword (:name %)) (->type (:type %)))
+                fields)]]))))
+
+(defn parse-structs []
+  (spit "parsed/structs.clj"
+        (str/join "\n\n"
+                  (map (comp #(str/replace % ":coffi.mem" "::mem")
+                             #(str/replace % ":raylib-clj.raylib/" "::")
+                             zp/zprint-str
+                             ->defstruct)
+                       (:structs api)))))
+
 (comment
-  (parse-functions)
   (def lookup
     {:functions (into {} (map #(vector (keyword (:name %)) %) (:functions api)))
      :structs (into {} (map #(vector (keyword (:name %)) %) (:structs api)))})
@@ -61,4 +77,9 @@
                  "unsigned char *"
                  "char *"]]
           [t (->type t)]))
-  (tap> (map ->defcfn (take 10 (:functions api)))))
+  (tap> (map ->defcfn (take 10 (:functions api))))
+  (tap> (->defstruct (first (:structs api))))
+  (tap> (map ->defstruct (:structs api)))
+
+  (parse-functions)
+  (parse-structs))
