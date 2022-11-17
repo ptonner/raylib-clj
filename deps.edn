@@ -1,9 +1,14 @@
+#_ (require '[clojure.tools.deps.alpha.repl :refer [add-libs]])
 {:paths ["src" "lib"]
  :deps {;; org.suskalo/coffi {:mvn/version "0.5.357"}
         io.github.IGJoshua/coffi {:git/sha "85a82f3d949aad3d0b74987782f913c964feb534"}}
  :aliases {:dev {:jvm-opts [;; "--add-modules=jdk.incubator.foreign"
                             "--enable-native-access=ALL-UNNAMED"
                             "--enable-preview"]}
-           :parse {:extra-deps {camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}
-                                cljfmt/cljfmt {:mvn/version "0.9.0"}}
+           :parse {:extra-deps
+                   #_ (add-libs)
+                   {camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}
+                    cljfmt/cljfmt {:mvn/version "0.9.0"}
+                    com.cnuernber/charred {:mvn/version "1.014"}
+                    zprint/zprint {:mvn/version "1.2.4"}}
                    :extra-paths ["parse"]}}}
