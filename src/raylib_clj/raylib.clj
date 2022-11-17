@@ -1,5 +1,6 @@
 (ns raylib-clj.raylib
   (:require [coffi.ffi :as ffi :refer [defcfn]]
+            [coffi.layout :as layout]
             [coffi.mem :as mem :refer [defalias]]))
 
 (ffi/load-library "lib/libraylib.so")
@@ -63,8 +64,6 @@
     [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
     ;; Matrix fourth row (4 components)
     [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float] [:m15 ::mem/float]]])
-
-(comment (tap> (mem/c-layout ::Matrix)))
 
 (defalias ::Color
           [::mem/struct
@@ -139,35 +138,39 @@
             [:boneWeights [::mem/pointer ::mem/float]] [:vaoId ::unsigned-int]
             [:vboId [::mem/pointer ::unsigned-int]]]])
 
-(defalias ::Shader [::mem/struct [[:id ::mem/int] [:locs ::mem/pointer]]])
+(defalias ::Shader (layout/with-c-layout [::mem/struct [[:id ::unsigned-int]
+                                                        ;; TODO: figure out why pointer doesn't work
+                                                        ;; [:locs [::mem/array ::mem/int 32]]
+                                                        [:locs ::mem/pointer]
+                                                        ;; [:locs [::mem/pointer ::mem/int]]
+                                                        ]]))
 
-
-;; (defcfn begin-shader-mode
-;;   "Begin custom shader drawing"
-;;   ;; BeginShaderMode
-;;   UnloadShader
-;;   [::Shader]
-;;   ::mem/void)
-
+(defcfn begin-shader-mode
+  "Begin custom shader drawing"
+  BeginShaderMode
+  [::Shader]
+  ::mem/void)
 
 ;; TODO: (de)serialize shader
 
 (comment
   (tap> (clojure.spec.alpha/conform
-          ::ffi/defcfn-args
-          '(begin-shader-mode "Begin custom shader drawing"
-                              BeginShaderMode
-                              [::Shader]
-                              ::mem/void)))
+         ::ffi/defcfn-args
+         '(begin-shader-mode "Begin custom shader drawing"
+                             BeginShaderMode
+                             [::Shader]
+                             ::mem/void)))
+  (tap> (mem/c-layout ::Shader))
   (tap> (#'ffi/function-descriptor [::Shader] ::mem/void))
-  (tap> (.argumentLayouts (#'ffi/function-descriptor [::Shader] ::mem/void)))
+  (tap> (.memberLayouts (nth  (.argumentLayouts (#'ffi/function-descriptor [::Shader] ::mem/void)) 0)))
   (tap> (#'ffi/function-descriptor
          [[::mem/struct [[:id ::mem/int] [:locs ::mem/pointer]]]]
          ::mem/void))
   (tap> (ffi/find-symbol 'BeginShaderMode))
   (tap> (#'ffi/downcall-handle
          (ffi/find-symbol 'BeginShaderMode)
-         (#'ffi/function-descriptor [::Shader] ::mem/void))))
+         (#'ffi/function-descriptor [::Shader] ::mem/void)))
+  (tap> (mem/deserialize (mem/serialize {:id 0 :locs [0 1]} ::Shader) ::Shader)))
 
 (comment (defcfn begin-shader-mode
                  "Begin custom shader drawing"
