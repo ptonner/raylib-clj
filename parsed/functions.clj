@@ -8,7 +8,7 @@
         "Check if KEY_ESCAPE pressed or Close icon pressed"
         "WindowShouldClose"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn close-window
         "Close window and unload OpenGL context"
@@ -20,49 +20,49 @@
         "Check if window has been initialized successfully"
         "IsWindowReady"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-fullscreen?
         "Check if window is currently fullscreen"
         "IsWindowFullscreen"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-hidden?
         "Check if window is currently hidden (only PLATFORM_DESKTOP)"
         "IsWindowHidden"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-minimized?
         "Check if window is currently minimized (only PLATFORM_DESKTOP)"
         "IsWindowMinimized"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-maximized?
         "Check if window is currently maximized (only PLATFORM_DESKTOP)"
         "IsWindowMaximized"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-focused?
         "Check if window is currently focused (only PLATFORM_DESKTOP)"
         "IsWindowFocused"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-resized?
         "Check if window has been resized last frame"
         "IsWindowResized"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-window-state?
         "Check if one specific window flag is enabled"
         "IsWindowState"
         [::unsigned-int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn set-window-state
         "Set window configuration state using flags (only PLATFORM_DESKTOP)"
@@ -288,7 +288,7 @@
         "Check if cursor is not visible"
         "IsCursorHidden"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn enable-cursor
         "Enables cursor (unlock cursor)"
@@ -306,7 +306,7 @@
         "Check if cursor is on the screen"
         "IsCursorOnScreen"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn clear-background
         "Set background color (framebuffer clear color)"
@@ -445,16 +445,15 @@
 (defcfn set-shader-value
         "Set shader uniform value"
         "SetShaderValue"
-        [::Shader ::mem/int
-         [::mem/pointer ::mem/const void] ::mem/int]
+        [::Shader ::mem/int ::mem/pointer
+         ::mem/int]
         ::mem/void)
 
 (defcfn set-shader-value-v
         "Set shader uniform value vector"
         "SetShaderValueV"
-        [::Shader ::mem/int
-         [::mem/pointer ::mem/const void] ::mem/int
-         ::mem/int]
+        [::Shader ::mem/int ::mem/pointer
+         ::mem/int ::mem/int]
         ::mem/void)
 
 (defcfn set-shader-value-matrix
@@ -563,13 +562,6 @@
         [::unsigned-int]
         ::mem/void)
 
-(defcfn
-  trace-log
-  "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)"
-  "TraceLog"
-  [::mem/int ::mem/c-string ::mem/...]
-  ::mem/void)
-
 (defcfn set-trace-log-level
         "Set the current threshold (minimum) log level"
         "SetTraceLogLevel"
@@ -600,36 +592,6 @@
         [::mem/c-string]
         ::mem/void)
 
-(defcfn set-trace-log-callback
-        "Set custom trace log"
-        "SetTraceLogCallback"
-        [::TraceLogCallback]
-        ::mem/void)
-
-(defcfn set-load-file-data-callback
-        "Set custom file binary data loader"
-        "SetLoadFileDataCallback"
-        [::LoadFileDataCallback]
-        ::mem/void)
-
-(defcfn set-save-file-data-callback
-        "Set custom file binary data saver"
-        "SetSaveFileDataCallback"
-        [::SaveFileDataCallback]
-        ::mem/void)
-
-(defcfn set-load-file-text-callback
-        "Set custom file text data loader"
-        "SetLoadFileTextCallback"
-        [::LoadFileTextCallback]
-        ::mem/void)
-
-(defcfn set-save-file-text-callback
-        "Set custom file text data saver"
-        "SetSaveFileTextCallback"
-        [::SaveFileTextCallback]
-        ::mem/void)
-
 (defcfn load-file-data
         "Load file data as byte array (read)"
         "LoadFileData"
@@ -647,14 +609,14 @@
         "Save data to file from byte array (write), returns true on success"
         "SaveFileData"
         [::mem/c-string ::mem/pointer ::unsigned-int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn export-data-as-code?
         "Export data to code (.h), returns true on success"
         "ExportDataAsCode"
         [::mem/c-string ::unsigned-int
          ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn load-file-text
         "Load text data from file (read), returns a '\\0' terminated string"
@@ -673,25 +635,25 @@
   "Save text data to file (write), string must be '\\0' terminated, returns true on success"
   "SaveFileText"
   [::mem/c-string ::mem/c-string]
-  ::mem/bool)
+  ::bool)
 
 (defcfn file-exists?
         "Check if file exists"
         "FileExists"
         [::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn directory-exists?
         "Check if a directory path exists"
         "DirectoryExists"
         [::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-file-extension?
         "Check file extension (including point: .png, .wav)"
         "IsFileExtension"
         [::mem/c-string ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn
   get-file-length
@@ -746,13 +708,13 @@
         "Change working directory, return true on success"
         "ChangeDirectory"
         [::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-path-file?
         "Check if a given path is a file or a directory"
         "IsPathFile"
         [::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn load-directory-files
         "Load directory filepaths"
@@ -764,7 +726,7 @@
   load-directory-files-ex
   "Load directory filepaths with extension filtering and recursive directory scan"
   "LoadDirectoryFilesEx"
-  [::mem/c-string ::mem/c-string ::mem/bool]
+  [::mem/c-string ::mem/c-string ::bool]
   ::FilePathList)
 
 (defcfn unload-directory-files
@@ -777,7 +739,7 @@
         "Check if a file has been dropped into window"
         "IsFileDropped"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn load-dropped-files
         "Load dropped filepaths"
@@ -825,25 +787,25 @@
         "Check if a key has been pressed once"
         "IsKeyPressed"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-key-down?
         "Check if a key is being pressed"
         "IsKeyDown"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-key-released?
         "Check if a key has been released once"
         "IsKeyReleased"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-key-up?
         "Check if a key is NOT being pressed"
         "IsKeyUp"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn set-exit-key
         "Set a custom key to exit program (default is ESC)"
@@ -869,7 +831,7 @@
         "Check if a gamepad is available"
         "IsGamepadAvailable"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-gamepad-name
         "Get gamepad internal name id"
@@ -881,25 +843,25 @@
         "Check if a gamepad button has been pressed once"
         "IsGamepadButtonPressed"
         [::mem/int ::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-gamepad-button-down?
         "Check if a gamepad button is being pressed"
         "IsGamepadButtonDown"
         [::mem/int ::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-gamepad-button-released?
         "Check if a gamepad button has been released once"
         "IsGamepadButtonReleased"
         [::mem/int ::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-gamepad-button-up?
         "Check if a gamepad button is NOT being pressed"
         "IsGamepadButtonUp"
         [::mem/int ::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-gamepad-button-pressed
         "Get the last gamepad button pressed"
@@ -929,25 +891,25 @@
         "Check if a mouse button has been pressed once"
         "IsMouseButtonPressed"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-mouse-button-down?
         "Check if a mouse button is being pressed"
         "IsMouseButtonDown"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-mouse-button-released?
         "Check if a mouse button has been released once"
         "IsMouseButtonReleased"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn is-mouse-button-up?
         "Check if a mouse button is NOT being pressed"
         "IsMouseButtonUp"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-mouse-x "Get mouse position X" "GetMouseX" [] ::mem/int)
 
@@ -1042,7 +1004,7 @@
         "Check if a gesture have been detected"
         "IsGestureDetected"
         [::mem/int]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-gesture-detected
         "Get latest detected gesture"
@@ -1385,47 +1347,47 @@
         "Check collision between two rectangles"
         "CheckCollisionRecs"
         [::Rectangle ::Rectangle]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-circles?
         "Check collision between two circles"
         "CheckCollisionCircles"
         [::Vector2 ::mem/float ::Vector2
          ::mem/float]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-circle-rec?
         "Check collision between circle and rectangle"
         "CheckCollisionCircleRec"
         [::Vector2 ::mem/float
          ::Rectangle]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-point-rec?
         "Check if point is inside rectangle"
         "CheckCollisionPointRec"
         [::Vector2 ::Rectangle]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-point-circle?
         "Check if point is inside circle"
         "CheckCollisionPointCircle"
         [::Vector2 ::Vector2 ::mem/float]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-point-triangle?
         "Check if point is inside a triangle"
         "CheckCollisionPointTriangle"
         [::Vector2 ::Vector2
          ::Vector2 ::Vector2]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-point-poly?
         "Check if point is within a polygon described by array of vertices"
         "CheckCollisionPointPoly"
         [::Vector2
-         [::mem/pointer ::Vector2] ::mem/int]
-        ::mem/bool)
+         ::mem/pointer ::mem/int]
+        ::bool)
 
 (defcfn
   check-collision-lines?
@@ -1434,7 +1396,7 @@
   [::Vector2 ::Vector2
    ::Vector2 ::Vector2
    [::mem/pointer ::Vector2]]
-  ::mem/bool)
+  ::bool)
 
 (defcfn
   check-collision-point-line?
@@ -1442,7 +1404,7 @@
   "CheckCollisionPointLine"
   [::Vector2 ::Vector2
    ::Vector2 ::mem/int]
-  ::mem/bool)
+  ::bool)
 
 (defcfn get-collision-rec
         "Get collision rectangle for two rectangles collision"
@@ -1498,14 +1460,14 @@
         "Export image data to file, returns true on success"
         "ExportImage"
         [::Image ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn
   export-image-as-code?
   "Export image as code file defining an array of bytes, returns true on success"
   "ExportImageAsCode"
   [::Image ::mem/c-string]
-  ::mem/bool)
+  ::bool)
 
 (defcfn gen-image-color
         "Generate image: plain color"
@@ -1916,15 +1878,14 @@
 (defcfn update-texture
         "Update GPU texture with new data"
         "UpdateTexture"
-        [::Texture2D
-         [::mem/pointer ::mem/const void]]
+        [::Texture2D ::mem/pointer]
         ::mem/void)
 
 (defcfn update-texture-rec
         "Update GPU texture rectangle with new data"
         "UpdateTextureRec"
         [::Texture2D ::Rectangle
-         [::mem/pointer ::mem/const void]]
+         ::mem/pointer]
         ::mem/void)
 
 (defcfn gen-texture-mipmaps
@@ -2153,7 +2114,7 @@
         "Export font as code file, returns true on success"
         "ExportFontAsCode"
         [::Font ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn draw-fps
         "Draw current FPS"
@@ -2301,19 +2262,13 @@
         "Check if two text string are equal"
         "TextIsEqual"
         [::mem/c-string ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn text-length
         "Get text length, checks for '\\0' ending"
         "TextLength"
         [::mem/c-string]
         ::unsigned-int)
-
-(defcfn text-format
-        "Text formatting with variables (sprintf() style)"
-        "TextFormat"
-        [::mem/c-string ::mem/...]
-        ::mem/c-string)
 
 (defcfn text-subtext
         "Get a piece of a text string"
@@ -2622,15 +2577,14 @@
 (defcfn upload-mesh
         "Upload mesh vertex data in GPU and provide VAO/VBO ids"
         "UploadMesh"
-        [[::mem/pointer ::Mesh] ::mem/bool]
+        [[::mem/pointer ::Mesh] ::bool]
         ::mem/void)
 
 (defcfn update-mesh-buffer
         "Update mesh vertex data in GPU for a specific buffer index"
         "UpdateMeshBuffer"
-        [::Mesh ::mem/int
-         [::mem/pointer ::mem/const void] ::mem/int
-         ::mem/int]
+        [::Mesh ::mem/int ::mem/pointer
+         ::mem/int ::mem/int]
         ::mem/void)
 
 (defcfn unload-mesh
@@ -2657,7 +2611,7 @@
         "Export mesh data to file, returns true on success"
         "ExportMesh"
         [::Mesh ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-mesh-bounding-box
         "Compute mesh bounding box limits"
@@ -2801,27 +2755,27 @@
         "Check model animation skeleton match"
         "IsModelAnimationValid"
         [::Model ::ModelAnimation]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-spheres?
         "Check collision between two spheres"
         "CheckCollisionSpheres"
         [::Vector3 ::mem/float ::Vector3
          ::mem/float]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-boxes?
         "Check collision between two bounding boxes"
         "CheckCollisionBoxes"
         [::BoundingBox ::BoundingBox]
-        ::mem/bool)
+        ::bool)
 
 (defcfn check-collision-box-sphere?
         "Check collision between box and sphere"
         "CheckCollisionBoxSphere"
         [::BoundingBox ::Vector3
          ::mem/float]
-        ::mem/bool)
+        ::bool)
 
 (defcfn get-ray-collision-sphere
         "Get collision info between ray and sphere"
@@ -2873,7 +2827,7 @@
         "Check if audio device has been initialized successfully"
         "IsAudioDeviceReady"
         []
-        ::mem/bool)
+        ::bool)
 
 (defcfn set-master-volume
         "Set master volume (listener)"
@@ -2909,8 +2863,7 @@
 (defcfn update-sound
         "Update sound buffer with new data"
         "UpdateSound"
-        [::Sound [::mem/pointer ::mem/const void]
-         ::mem/int]
+        [::Sound ::mem/pointer ::mem/int]
         ::mem/void)
 
 (defcfn unload-wave
@@ -2929,13 +2882,13 @@
         "Export wave data to file, returns true on success"
         "ExportWave"
         [::Wave ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn export-wave-as-code?
         "Export wave sample data to code (.h), returns true on success"
         "ExportWaveAsCode"
         [::Wave ::mem/c-string]
-        ::mem/bool)
+        ::bool)
 
 (defcfn play-sound
         "Play a sound"
@@ -2983,7 +2936,7 @@
         "Check if a sound is currently playing"
         "IsSoundPlaying"
         [::Sound]
-        ::mem/bool)
+        ::bool)
 
 (defcfn set-sound-volume
         "Set volume for a sound (1.0 is max level)"
@@ -3063,7 +3016,7 @@
         "Check if music is playing"
         "IsMusicStreamPlaying"
         [::Music]
-        ::mem/bool)
+        ::bool)
 
 (defcfn update-music-stream
         "Updates buffers for music streaming"
@@ -3141,15 +3094,14 @@
 (defcfn update-audio-stream
         "Update audio stream buffers with data"
         "UpdateAudioStream"
-        [::AudioStream
-         [::mem/pointer ::mem/const void] ::mem/int]
+        [::AudioStream ::mem/pointer ::mem/int]
         ::mem/void)
 
 (defcfn is-audio-stream-processed?
         "Check if any audio stream buffers requires refill"
         "IsAudioStreamProcessed"
         [::AudioStream]
-        ::mem/bool)
+        ::bool)
 
 (defcfn play-audio-stream
         "Play audio stream"
@@ -3173,7 +3125,7 @@
         "Check if audio stream is playing"
         "IsAudioStreamPlaying"
         [::AudioStream]
-        ::mem/bool)
+        ::bool)
 
 (defcfn stop-audio-stream
         "Stop audio stream"
@@ -3203,12 +3155,6 @@
         "Default size for new audio streams"
         "SetAudioStreamBufferSizeDefault"
         [::mem/int]
-        ::mem/void)
-
-(defcfn set-audio-stream-callback
-        "Audio thread callback to request new data"
-        "SetAudioStreamCallback"
-        [::AudioStream ::AudioCallback]
         ::mem/void)
 
 (defcfn attach-audio-stream-processor

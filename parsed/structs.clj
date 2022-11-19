@@ -1,4 +1,12 @@
-(defalias ::Vector2
+(defalias ::Quaternion ::Vector4)
+
+(defalias ::Texture2D ::Texture)
+
+(defalias ::TextureCubemap ::Texture)
+
+(defalias ::RenderTexture2D ::RenderTexture)
+
+(defalias ::Camera ::Camera3D)(defalias ::Vector2
           (layout/with-c-layout
             [::mem/struct [[:x ::mem/float] [:y ::mem/float]]]))
 
@@ -169,12 +177,12 @@
                                  [[:position ::Vector3]
                                   [:direction ::Vector3]]]))
 
-(defalias
-  ::RayCollision
-  (layout/with-c-layout [::mem/struct
-                         [[:hit ::mem/bool] [:distance ::mem/float]
-                          [:point ::Vector3]
-                          [:normal ::Vector3]]]))
+(defalias ::RayCollision
+          (layout/with-c-layout
+            [::mem/struct
+             [[:hit ::bool] [:distance ::mem/float]
+              [:point ::Vector3]
+              [:normal ::Vector3]]]))
 
 (defalias ::BoundingBox
           (layout/with-c-layout [::mem/struct
@@ -204,13 +212,13 @@
              [[:stream ::AudioStream]
               [:frameCount ::unsigned-int]]]))
 
-(defalias
-  ::Music
-  (layout/with-c-layout
-    [::mem/struct
-     [[:stream ::AudioStream]
-      [:frameCount ::unsigned-int] [:looping ::mem/bool]
-      [:ctxType ::mem/int] [:ctxData ::mem/pointer]]]))
+(defalias ::Music
+          (layout/with-c-layout
+            [::mem/struct
+             [[:stream ::AudioStream]
+              [:frameCount ::unsigned-int]
+              [:looping ::bool] [:ctxType ::mem/int]
+              [:ctxData ::mem/pointer]]]))
 
 (defalias
   ::VrDeviceInfo
