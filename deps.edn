@@ -5,6 +5,7 @@
  :aliases {:dev {:jvm-opts [;; "--add-modules=jdk.incubator.foreign"
                             "--enable-native-access=ALL-UNNAMED"
                             "--enable-preview"]}
+           :examples {:extra-paths ["examples"]}
            :parse {:extra-deps
                    #_ (add-libs)
                    {camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}

@@ -1,7 +1,8 @@
 (ns raylib-clj.raylib
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.layout :as layout]
-            [coffi.mem :as mem :refer [defalias]]))
+            [coffi.mem :as mem :refer [defalias]])
+  (:import [java.nio ByteOrder]))
 
 (ffi/load-library "lib/libraylib.so")
 
@@ -11,15 +12,30 @@
 (defmethod mem/primitive-type ::bool [_type] ::mem/int)
 (defmethod mem/serialize* ::bool [obj _type _scope] (int (if obj 1 0)))
 (defmethod mem/deserialize* ::bool [obj _type] (not (zero? obj)))
+(defmethod mem/c-layout ::bool
+  [type]
+  (if (sequential? type)
+    (.withOrder mem/int-layout ^ByteOrder (second type))
+    mem/int-layout))
 
 ;; Unsigned primitives
 (defalias ::unsigned-char ::mem/char); chars are already unsigned (?)
+(defmethod mem/c-layout ::unsigned-char
+  [type]
+  (if (sequential? type)
+    (.withOrder mem/char-layout ^ByteOrder (second type))
+    mem/char-layout))
 
 (defmethod mem/primitive-type ::unsigned-int [_type] ::mem/int)
 (defmethod mem/serialize* ::unsigned-int [obj _type _scope] (unchecked-int obj))
 (defmethod mem/deserialize* ::unsigned-int
   [obj _type]
   (Integer/toUnsignedLong obj))
+(defmethod mem/c-layout ::unsigned-int
+  [type]
+  (if (sequential? type)
+    (.withOrder mem/int-layout ^ByteOrder (second type))
+    mem/int-layout))
 
 (defmethod mem/primitive-type ::unsigned-short [_type] ::mem/short)
 (defmethod mem/serialize* ::unsigned-short
@@ -28,264 +44,277 @@
 (defmethod mem/deserialize* ::unsigned-short
   [obj _type]
   (Short/toUnsignedInt obj))
+(defmethod mem/c-layout ::unsigned-short
+  [type]
+  (if (sequential? type)
+    (.withOrder mem/short-layout ^ByteOrder (second type))
+    mem/short-layout))
 
 (comment (let [val (+ 1 (int (Integer/MAX_VALUE)))]
            (tap> [val
                   (mem/deserialize (mem/serialize val ::unsigned-int)
                                    ::unsigned-int)]))
+         (tap> mem/short-alignment)
          (tap> (mem/c-layout ::unsigned-int)))
 
 ;; Structs
-
-(comment (tap> (ns-publics 'coffi.mem))
-         (tap> (mem/c-layout [::mem/struct [[:x ::mem/float]]])))
-
-(defalias ::Vector2 [::mem/struct [[:x ::mem/float] [:y ::mem/float]]])
-
-(defalias ::Vector3
-          [::mem/struct [[:x ::mem/float] [:y ::mem/float] [:z ::mem/float]]])
-
-(defalias ::Vector4
-          [::mem/struct
-           [[:x ::mem/float] [:y ::mem/float] [:z ::mem/float]
-            [:w ::mem/float]]])
-
 (defalias ::Quaternion ::Vector4)
 
-(defalias
-  ;; Matrix, 4x4 components, column major, OpenGL style, right handed
-  ::Matrix
-  [::mem/struct
-   [;; Matrix first row (4 components)
-    [:m0 ::mem/float] [:m4 ::mem/float] [:m8 ::mem/float] [:m12 ::mem/float]
-    ;; Matrix second row (4 components)
-    [:m1 ::mem/float] [:m5 ::mem/float] [:m9 ::mem/float] [:m13 ::mem/float]
-    ;; Matrix third row (4 components)
-    [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
-    ;; Matrix fourth row (4 components)
-    [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float] [:m15 ::mem/float]]])
-
-(defalias ::Color
-          [::mem/struct
-           [[:r ::mem/char] [:g ::mem/char] [:b ::mem/char] [:a ::mem/char]]])
-
-(defalias ::Rectangle
-          [::mem/struct
-           [[:x ::mem/float] [:y ::mem/float] [:width ::mem/float]
-            [:height ::mem/float]]])
-
-(defalias ::Image
-          [::mem/struct
-           [[:data ::mem/pointer] [:width ::mem/int] [:height ::mem/int]
-            [:mipmaps ::mem/int] [:format ::mem/int]]])
-
-(defalias ::Texture
-          [::mem/struct
-           [[:id ::unsigned-int] [:width ::mem/int] [:height ::mem/int]
-            [:mipmaps ::mem/int] [:format ::mem/int]]])
-
 (defalias ::Texture2D ::Texture)
-(defalias ::TextureCubemap ::Texture)
 
-(defalias ::RenderTexture
-          [::mem/struct
-           [[:id ::unsigned-int] [:texture ::Texture] [:depth ::Texture]]])
+(defalias ::TextureCubemap ::Texture)
 
 (defalias ::RenderTexture2D ::RenderTexture)
 
-(defalias ::NPatchInfo
-          [::mem/struct
-           [[:source ::Rectangle] [:left ::mem/int] [:top ::mem/int]
-            [:right ::mem/int] [:bottom ::mem/int] [:layout ::mem/int]]])
+(defalias ::Camera ::Camera3D)(defalias ::Vector2
+          (layout/with-c-layout
+            [::mem/struct [[:x ::mem/float] [:y ::mem/float]]]))
 
-(defalias ::GlyphInfo
-          [::mem/struct
-           [[:value ::mem/int] [:offsetX ::mem/int] [:offsetY ::mem/int]
-            [:advanceX ::mem/int] [:image ::Image]]])
+(defalias ::Vector3
+          (layout/with-c-layout [::mem/struct
+                                 [[:x ::mem/float] [:y ::mem/float]
+                                  [:z ::mem/float]]]))
+
+(defalias ::Vector4
+          (layout/with-c-layout
+            [::mem/struct
+             [[:x ::mem/float] [:y ::mem/float] [:z ::mem/float]
+              [:w ::mem/float]]]))
+
+(defalias
+  ::Matrix
+  (layout/with-c-layout
+    [::mem/struct
+     [[:m0 ::mem/float] [:m4 ::mem/float] [:m8 ::mem/float]
+      [:m12 ::mem/float] [:m1 ::mem/float] [:m5 ::mem/float]
+      [:m9 ::mem/float] [:m13 ::mem/float] [:m2 ::mem/float]
+      [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
+      [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float]
+      [:m15 ::mem/float]]]))
+
+(defalias ::Color
+          (layout/with-c-layout [::mem/struct
+                                 [[:r ::unsigned-char]
+                                  [:g ::unsigned-char]
+                                  [:b ::unsigned-char]
+                                  [:a ::unsigned-char]]]))
+
+(defalias ::Rectangle
+          (layout/with-c-layout
+            [::mem/struct
+             [[:x ::mem/float] [:y ::mem/float]
+              [:width ::mem/float] [:height ::mem/float]]]))
+
+(defalias
+  ::Image
+  (layout/with-c-layout [::mem/struct
+                         [[:data ::mem/pointer] [:width ::mem/int]
+                          [:height ::mem/int] [:mipmaps ::mem/int]
+                          [:format ::mem/int]]]))
+
+(defalias
+  ::Texture
+  (layout/with-c-layout [::mem/struct
+                         [[:id ::unsigned-int]
+                          [:width ::mem/int] [:height ::mem/int]
+                          [:mipmaps ::mem/int] [:format ::mem/int]]]))
+
+(defalias ::RenderTexture
+  (layout/with-c-layout [::mem/struct
+                         [[:id ::unsigned-int]
+                          [:texture ::Texture]
+                          [:depth ::Texture]]]))
+
+(defalias ::NPatchInfo
+          (layout/with-c-layout
+            [::mem/struct
+             [[:source ::Rectangle] [:left ::mem/int]
+              [:top ::mem/int] [:right ::mem/int]
+              [:bottom ::mem/int] [:layout ::mem/int]]]))
+
+(defalias
+  ::GlyphInfo
+  (layout/with-c-layout [::mem/struct
+                         [[:value ::mem/int] [:offsetX ::mem/int]
+                          [:offsetY ::mem/int] [:advanceX ::mem/int]
+                          [:image ::Image]]]))
 
 (defalias
   ::Font
-  [::mem/struct
-   [[:baseSize ::mem/int] [:glyphCount ::mem/int] [:glyphPadding ::mem/int]
-    [:texture ::Texture2D] [:recs [::mem/pointer ::Rectangle]]
-    [:glyphs [::mem/pointer ::GlyphInfo]]]])
-
-(defalias ::Camera3D
-          [::mem/struct
-           [[:position ::Vector3] [:target ::Vector3] [:up ::Vector3]
-            [:fovy ::mem/float] [:projection ::mem/int]]])
-
-(defalias ::Camera ::Camera3D)
-
-(defalias ::Camera2D
-          [::mem/struct
-           [[:offset ::Vector2] [:target ::Vector2] [:rotation ::mem/float]
-            [:zoom ::mem/float]]])
-
-(defalias ::Mesh
-          [::mem/struct
-           [[:vertexCount ::mem/int] [:triangleCount ::mem/int]
-            [:vertices [::mem/pointer ::mem/float]]
-            [:texcoords [::mem/pointer ::mem/float]]
-            [:texcoords2 [::mem/pointer ::mem/float]]
-            [:normals [::mem/pointer ::mem/float]]
-            [:tangents [::mem/pointer ::mem/float]]
-            [:colors [::mem/pointer ::unsigned-char]]
-            [:indices [::mem/pointer ::unsigned-short]]
-            [:animVertices [::mem/pointer ::mem/float]]
-            [:animNormals [::mem/pointer ::mem/float]]
-            [:boneIds [::mem/pointer ::unsigned-char]]
-            [:boneWeights [::mem/pointer ::mem/float]] [:vaoId ::unsigned-int]
-            [:vboId [::mem/pointer ::unsigned-int]]]])
-
-(defalias ::Shader (layout/with-c-layout [::mem/struct [[:id ::unsigned-int]
-                                                        ;; TODO: figure out why pointer doesn't work
-                                                        ;; [:locs [::mem/array ::mem/int 32]]
-                                                        [:locs ::mem/pointer]
-                                                        ;; [:locs [::mem/pointer ::mem/int]]
-                                                        ]]))
-
-(defcfn begin-shader-mode
-  "Begin custom shader drawing"
-  BeginShaderMode
-  [::Shader]
-  ::mem/void)
-
-;; TODO: (de)serialize shader
-
-(comment
-  (tap> (clojure.spec.alpha/conform
-         ::ffi/defcfn-args
-         '(begin-shader-mode "Begin custom shader drawing"
-                             BeginShaderMode
-                             [::Shader]
-                             ::mem/void)))
-  (tap> (mem/c-layout ::Shader))
-  (tap> (#'ffi/function-descriptor [::Shader] ::mem/void))
-  (tap> (.memberLayouts (nth  (.argumentLayouts (#'ffi/function-descriptor [::Shader] ::mem/void)) 0)))
-  (tap> (#'ffi/function-descriptor
-         [[::mem/struct [[:id ::mem/int] [:locs ::mem/pointer]]]]
-         ::mem/void))
-  (tap> (ffi/find-symbol 'BeginShaderMode))
-  (tap> (#'ffi/downcall-handle
-         (ffi/find-symbol 'BeginShaderMode)
-         (#'ffi/function-descriptor [::Shader] ::mem/void)))
-  (tap> (mem/deserialize (mem/serialize {:id 0 :locs [0 1]} ::Shader) ::Shader)))
-
-(comment (defcfn begin-shader-mode
-                 "Begin custom shader drawing"
-                 BeginShaderMode
-                 [::Shader]
-                 ::mem/void))
-
-
-(defalias ::MaterialMap
-          [::mem/struct
-           [[:texture ::Texture2D] [:color ::Color] [:value ::mem/float]]])
-
-(defalias ::Material
-          [::mem/struct
-           [[:shader ::Shader] [:maps [::mem/pointer ::MaterialMap]]
-            [:params [::mem/array ::mem/float 4]]]])
-
-(defalias ::BoneInfo
-          [::mem/struct
-           [[:name [::mem/array ::mem/char 32]] [:parent ::mem/int]]])
+  (layout/with-c-layout
+    [::mem/struct
+     [[:baseSize ::mem/int] [:glyphCount ::mem/int]
+      [:glyphPadding ::mem/int] [:texture ::Texture2D]
+      [:recs [::mem/pointer ::Rectangle]]
+      [:glyphs [::mem/pointer ::GlyphInfo]]]]))
 
 (defalias
-  ::Model
-  [::mem/struct
-   [[:transform ::Matrix] [:meshCount ::mem/int] [:materialCount ::mem/int]
-    [:meshes [::mem/pointer ::Mesh]] [:materials [::mem/pointer ::Material]]
-    [:meshMaterial [::mem/pointer ::mem/int]] [:boneCount ::mem/int]
-    [:bones [::mem/pointer ::BoneInfo]]
-    [:bindPose [::mem/pointer ::Transform]]]])
+  ::Camera3D
+  (layout/with-c-layout
+    [::mem/struct
+     [[:position ::Vector3]
+      [:target ::Vector3] [:up ::Vector3]
+      [:fovy ::mem/float] [:projection ::mem/int]]]))
 
-(defalias ::ModelAnimation
-          [::mem/struct
-           [[:boneCount ::mem/int] [:frameCount ::mem/int]
-            [:bones [::mem/pointer ::BoneInfo]]
-            [:framePoses [::mem/pointer [::mem/pointer ::Transform]]]]])
+(defalias
+  ::Camera2D
+  (layout/with-c-layout
+    [::mem/struct
+     [[:offset ::Vector2] [:target ::Vector2]
+      [:rotation ::mem/float] [:zoom ::mem/float]]]))
+
+(defalias ::Mesh
+          (layout/with-c-layout
+            [::mem/struct
+             [[:vertexCount ::mem/int] [:triangleCount ::mem/int]
+              [:vertices [::mem/pointer ::mem/float]]
+              [:texcoords [::mem/pointer ::mem/float]]
+              [:texcoords2 [::mem/pointer ::mem/float]]
+              [:normals [::mem/pointer ::mem/float]]
+              [:tangents [::mem/pointer ::mem/float]]
+              [:colors ::mem/c-string]
+              [:indices [::mem/pointer ::unsigned-short]]
+              [:animVertices [::mem/pointer ::mem/float]]
+              [:animNormals [::mem/pointer ::mem/float]]
+              [:boneIds ::mem/c-string]
+              [:boneWeights [::mem/pointer ::mem/float]]
+              [:vaoId ::unsigned-int]
+              [:vboId [::mem/pointer ::unsigned-int]]]]))
+
+(defalias ::Shader
+          (layout/with-c-layout
+            [::mem/struct
+             [[:id ::unsigned-int]
+              [:locs [::mem/pointer ::mem/int]]]]))
+
+(defalias ::MaterialMap
+          (layout/with-c-layout
+            [::mem/struct
+             [[:texture ::Texture2D]
+              [:color ::Color] [:value ::mem/float]]]))
+
+(defalias ::Material
+          (layout/with-c-layout
+            [::mem/struct
+             [[:shader ::Shader]
+              [:maps [::mem/pointer ::MaterialMap]]
+              [:params ::mem/float[4]]]]))
 
 (defalias ::Transform
-          [::mem/struct
-           [[:translation ::Vector3] [:rotation ::Quaternion]
-            [:scale ::Vector3]]])
+          (layout/with-c-layout [::mem/struct
+                                 [[:translation ::Vector3]
+                                  [:rotation ::Quaternion]
+                                  [:scale ::Vector3]]]))
 
-(defalias ::Ray [::mem/struct [[:position ::Vector3] [:direction ::Vector3]]])
+(defalias ::BoneInfo
+          (layout/with-c-layout [::mem/struct
+                                 [[:name ::mem/char[32]]
+                                  [:parent ::mem/int]]]))
+
+(defalias ::Model
+          (layout/with-c-layout
+            [::mem/struct
+             [[:transform ::Matrix] [:meshCount ::mem/int]
+              [:materialCount ::mem/int]
+              [:meshes [::mem/pointer ::Mesh]]
+              [:materials [::mem/pointer ::Material]]
+              [:meshMaterial [::mem/pointer ::mem/int]]
+              [:boneCount ::mem/int]
+              [:bones [::mem/pointer ::BoneInfo]]
+              [:bindPose [::mem/pointer ::Transform]]]]))
+
+(defalias ::ModelAnimation
+          (layout/with-c-layout
+            [::mem/struct
+             [[:boneCount ::mem/int] [:frameCount ::mem/int]
+              [:bones [::mem/pointer ::BoneInfo]]
+              [:framePoses
+               [::mem/pointer
+                [::mem/pointer ::Transform]]]]]))
+
+(defalias ::Ray
+          (layout/with-c-layout [::mem/struct
+                                 [[:position ::Vector3]
+                                  [:direction ::Vector3]]]))
 
 (defalias ::RayCollision
-          [::mem/struct
-           [[:hit ::bool] [:distance ::mem/float] [:point ::Vector3]
-            [:normal ::Vector3]]])
+          (layout/with-c-layout
+            [::mem/struct
+             [[:hit ::bool] [:distance ::mem/float]
+              [:point ::Vector3]
+              [:normal ::Vector3]]]))
 
-(defalias ::BoundingBox [::mem/struct [[:min ::Vector3] [:max ::Vector3]]])
+(defalias ::BoundingBox
+          (layout/with-c-layout [::mem/struct
+                                 [[:min ::Vector3]
+                                  [:max ::Vector3]]]))
 
 (defalias ::Wave
-          [::mem/struct
-           [[:frameCount ::unsigned-int] [:sampleRate ::unsigned-int]
-            [:sampleSize ::unsigned-int] [:channels ::unsigned-int]
-            [:data ::mem/pointer]]])
+          (layout/with-c-layout [::mem/struct
+                                 [[:frameCount ::unsigned-int]
+                                  [:sampleRate ::unsigned-int]
+                                  [:sampleSize ::unsigned-int]
+                                  [:channels ::unsigned-int]
+                                  [:data ::mem/pointer]]]))
 
-;; TODO: add sound support (needs rAudioBuffer and rAudioProcessor)
-;; (defalias
-;;   ::AudioStream
-;;   [::mem/struct
-;;    [[:buffer [::mem/pointer ::rAudioBuffer]]
-;;     [:processor [::mem/pointer ::rAudioProcessor]] [:sampleRate
-;;     ::unsigned-int]
-;;     [:sampleSize ::unsigned-int] [:channels ::unsigned-int]]])
+(defalias ::AudioStream
+          (layout/with-c-layout
+            [::mem/struct
+             [[:buffer [::mem/pointer ::mem/rAudioBuffer]]
+              [:processor [::mem/pointer ::mem/rAudioProcessor]]
+              [:sampleRate ::unsigned-int]
+              [:sampleSize ::unsigned-int]
+              [:channels ::unsigned-int]]]))
 
-;; (defalias ::Sound
-;;           [::mem/struct [[:stream ::AudioStream] [:frameCount
-;;           ::unsigned-int]]])
+(defalias ::Sound
+          (layout/with-c-layout
+            [::mem/struct
+             [[:stream ::AudioStream]
+              [:frameCount ::unsigned-int]]]))
 
-;; (defalias ::Music
-;;           [::mem/struct
-;;            [[:stream ::AudioStream] [:frameCount ::unsigned-int]
-;;             [:looping ::bool] [:ctxType ::mem/int] [:ctxData
-;;             ::mem/pointer]]])
+(defalias ::Music
+          (layout/with-c-layout
+            [::mem/struct
+             [[:stream ::AudioStream]
+              [:frameCount ::unsigned-int]
+              [:looping ::bool] [:ctxType ::mem/int]
+              [:ctxData ::mem/pointer]]]))
 
 (defalias
   ::VrDeviceInfo
-  [::mem/struct
-   [[:hResolution ::mem/int] [:vResolution ::mem/int] [:hScreenSize ::mem/float]
-    [:vScreenSize ::mem/float] [:vScreenCenter ::mem/float]
-    [:eyeToScreenDistance ::mem/float] [:lensSeparationDistance ::mem/float]
-    [:interpupillaryDistance ::mem/float]
-    [:lensDistortionValues [::mem/array ::mem/float 4]]
-    [:chromaAbCorrection [::mem/array ::mem/float 4]]]])
+  (layout/with-c-layout
+    [::mem/struct
+     [[:hResolution ::mem/int] [:vResolution ::mem/int]
+      [:hScreenSize ::mem/float] [:vScreenSize ::mem/float]
+      [:vScreenCenter ::mem/float] [:eyeToScreenDistance ::mem/float]
+      [:lensSeparationDistance ::mem/float]
+      [:interpupillaryDistance ::mem/float]
+      [:lensDistortionValues ::mem/float[4]]
+      [:chromaAbCorrection ::mem/float[4]]]]))
 
 (defalias ::VrStereoConfig
-          [::mem/struct
-           [[:projection [::mem/array ::Matrix 2]]
-            [:viewOffset [::mem/array ::Matrix 2]]
-            [:leftLensCenter [::mem/array ::mem/float 2]]
-            [:rightLensCenter [::mem/array ::mem/float 2]]
-            [:leftScreenCenter [::mem/array ::mem/float 2]]
-            [:rightScreenCenter [::mem/array ::mem/float 2]]
-            [:scale [::mem/array ::mem/float 2]]
-            [:scaleIn [::mem/array ::mem/float 2]]]])
+          (layout/with-c-layout
+            [::mem/struct
+             [[:projection ::Matrix[2]]
+              [:viewOffset ::Matrix[2]]
+              [:leftLensCenter ::mem/float[2]]
+              [:rightLensCenter ::mem/float[2]]
+              [:leftScreenCenter ::mem/float[2]]
+              [:rightScreenCenter ::mem/float[2]]
+              [:scale ::mem/float[2]] [:scaleIn ::mem/float[2]]]]))
 
-(defalias ::FilePathList
-          [::mem/struct
-           [[:capacity ::unsigned-int] [:count ::unsigned-int]
-            [:paths [::mem/pointer ::mem/c-string]]]])
+(defalias
+  ::FilePathList
+  (layout/with-c-layout [::mem/struct
+                         [[:capacity ::unsigned-int]
+                          [:count ::unsigned-int]
+                          [:paths [::mem/pointer ::mem/c-string]]]]))
 
-(comment (tap> (mem/deserialize
-                 (mem/serialize {:x 0.0, :y 100.0, :width 100.0, :height 100.0}
-                                ::Rectangle)
-                 ::Rectangle)))
-
-;; (defalias ::Image
-;;   [::mem/struct
-;;    [[:*data ::mem/void] [:width ::mem/int]
-;;     [:height ::mem/int] [:mipmaps ::mem/int]
-;;     [:format ::mem/int]]])
 
 ;; Constants
 
 (def raywhite {:r 245, :g 245, :b 245, :a 255})
+(def lightgray {:r 200, :g 200, :b 200, :a 255})
 
 ;; Enums ----------------------------------------------------------------------
 
@@ -1218,354 +1247,692 @@
          nil)
 
 
-;; Functions
-;; -------------------------------------------------------------------
+;; Functions -------------------------------------------------------------------
 
-;; Window
-
-;; (defcfn init-window
-;;         "Initialize window"
-;;         InitWindow
-;;         [::mem/int ::mem/int ::mem/c-string]
-;;         ::mem/void)
-
-;; (defcfn close-window "Close window" CloseWindow [] ::mem/void)
-
-;; (defcfn window-should-close? "Window should close?" WindowShouldClose []
-;; ::bool)
-
-;; (defcfn is-window-ready?
-;;         "Check if window has been initialized successfully"
-;;         IsWindowReady
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-fullscreen?
-;;         "Check if window is currently fullscreen"
-;;         IsWindowFullscreen
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-hidden?
-;;         "Check if window is currently hidden (only PLATFORM_DESKTOP)"
-;;         IsWindowHidden
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-minimized?
-;;         "Check if window is currently minimized (only PLATFORM_DESKTOP)"
-;;         IsWindowMinimized
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-maximized?
-;;         "Check if window is currently maximized (only PLATFORM_DESKTOP)"
-;;         IsWindowMaximized
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-focused?
-;;         "Check if window is currently focused (only PLATFORM_DESKTOP)"
-;;         IsWindowFocused
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-resized?
-;;         "Check if window has been resized last frame"
-;;         IsWindowResized
-;;         []
-;;         ::bool)
-
-;; (defcfn is-window-state?
-;;         "Check if one specific window flag is enabled"
-;;         IsWindowState
-;;         [::mem/int]
-;;         ::bool)
-
-;; (defcfn set-target-fps "Set target FPS" SetTargetFPS [::mem/int] ::mem/void)
-
-;; (defcfn begin-drawing "Begin drawing" BeginDrawing [] ::mem/void)
-
-;; (defcfn end-drawing "End drawing" EndDrawing [] ::mem/void)
-
-;; (defcfn clear-background
-;;         "Clear the background"
-;;         ClearBackground
-;;         [::Color]
-;;         ::mem/void)
-
-;; (defcfn get-random-value
-;;         "Get random value"
-;;         GetRandomValue
-;;         [::mem/int ::mem/int]
-;;         ::mem/int)
-
+;; Window-related functions
 (defcfn init-window
         "Initialize window and OpenGL context"
-        InitWindow
-        [:coffi.mem/int :coffi.mem/int :coffi.mem/c-string]
-        :coffi.mem/void)
+        "InitWindow"
+        [::mem/int ::mem/int ::mem/c-string]
+        ::mem/void)
 
 (defcfn window-should-close?
         "Check if KEY_ESCAPE pressed or Close icon pressed"
-        WindowShouldClose
+        "WindowShouldClose"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn close-window
         "Close window and unload OpenGL context"
-        CloseWindow
+        "CloseWindow"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
 (defcfn is-window-ready?
         "Check if window has been initialized successfully"
-        IsWindowReady
+        "IsWindowReady"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-fullscreen?
         "Check if window is currently fullscreen"
-        IsWindowFullscreen
+        "IsWindowFullscreen"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-hidden?
         "Check if window is currently hidden (only PLATFORM_DESKTOP)"
-        IsWindowHidden
+        "IsWindowHidden"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-minimized?
         "Check if window is currently minimized (only PLATFORM_DESKTOP)"
-        IsWindowMinimized
+        "IsWindowMinimized"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-maximized?
         "Check if window is currently maximized (only PLATFORM_DESKTOP)"
-        IsWindowMaximized
+        "IsWindowMaximized"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-focused?
         "Check if window is currently focused (only PLATFORM_DESKTOP)"
-        IsWindowFocused
+        "IsWindowFocused"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-resized?
         "Check if window has been resized last frame"
-        IsWindowResized
+        "IsWindowResized"
         []
-        :raylib-clj.raylib/bool)
+        ::bool)
 
 (defcfn is-window-state?
         "Check if one specific window flag is enabled"
-        IsWindowState
-        [:coffi.mem/long]
-        :raylib-clj.raylib/bool)
+        "IsWindowState"
+        [::unsigned-int]
+        ::bool)
 
 (defcfn set-window-state
         "Set window configuration state using flags (only PLATFORM_DESKTOP)"
-        SetWindowState
-        [:coffi.mem/long]
-        :coffi.mem/void)
+        "SetWindowState"
+        [::unsigned-int]
+        ::mem/void)
 
 (defcfn clear-window-state
         "Clear window configuration state flags"
-        ClearWindowState
-        [:coffi.mem/long]
-        :coffi.mem/void)
+        "ClearWindowState"
+        [::unsigned-int]
+        ::mem/void)
 
 (defcfn toggle-fullscreen
         "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)"
-        ToggleFullscreen
+        "ToggleFullscreen"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
 (defcfn maximize-window
         "Set window state: maximized, if resizable (only PLATFORM_DESKTOP)"
-        MaximizeWindow
+        "MaximizeWindow"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
 (defcfn minimize-window
         "Set window state: minimized, if resizable (only PLATFORM_DESKTOP)"
-        MinimizeWindow
+        "MinimizeWindow"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
 (defcfn restore-window
         "Set window state: not minimized/maximized (only PLATFORM_DESKTOP)"
-        RestoreWindow
+        "RestoreWindow"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
-;; (defcfn set-window-icon
-;;         "Set icon for window (only PLATFORM_DESKTOP)"
-;;         SetWindowIcon
-;;         [:raylib-clj.raylib/Image]
-;;         :coffi.mem/void)
+(defcfn set-window-icon
+        "Set icon for window (only PLATFORM_DESKTOP)"
+        "SetWindowIcon"
+        [::Image]
+        ::mem/void)
 
 (defcfn set-window-title
         "Set title for window (only PLATFORM_DESKTOP)"
-        SetWindowTitle
-        [:coffi.mem/c-string]
-        :coffi.mem/void)
+        "SetWindowTitle"
+        [::mem/c-string]
+        ::mem/void)
 
 (defcfn set-window-position
         "Set window position on screen (only PLATFORM_DESKTOP)"
-        SetWindowPosition
-        [:coffi.mem/int :coffi.mem/int]
-        :coffi.mem/void)
+        "SetWindowPosition"
+        [::mem/int ::mem/int]
+        ::mem/void)
 
 (defcfn set-window-monitor
         "Set monitor for the current window (fullscreen mode)"
-        SetWindowMonitor
-        [:coffi.mem/int]
-        :coffi.mem/void)
+        "SetWindowMonitor"
+        [::mem/int]
+        ::mem/void)
 
 (defcfn set-window-min-size
         "Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)"
-        SetWindowMinSize
-        [:coffi.mem/int :coffi.mem/int]
-        :coffi.mem/void)
+        "SetWindowMinSize"
+        [::mem/int ::mem/int]
+        ::mem/void)
 
 (defcfn set-window-size
         "Set window dimensions"
-        SetWindowSize
-        [:coffi.mem/int :coffi.mem/int]
-        :coffi.mem/void)
+        "SetWindowSize"
+        [::mem/int ::mem/int]
+        ::mem/void)
 
 (defcfn set-window-opacity
         "Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)"
-        SetWindowOpacity
-        [:coffi.mem/float]
-        :coffi.mem/void)
+        "SetWindowOpacity"
+        [::mem/float]
+        ::mem/void)
 
-;; (defcfn get-window-handle
-;;         "Get native window handle"
-;;         GetWindowHandle
-;;         []
-;;         :raylib-clj.raylib/void
-;;         *)
+(defcfn get-window-handle
+        "Get native window handle"
+        "GetWindowHandle"
+        []
+        ::mem/pointer)
 
 (defcfn get-screen-width
         "Get current screen width"
-        GetScreenWidth
+        "GetScreenWidth"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-screen-height
         "Get current screen height"
-        GetScreenHeight
+        "GetScreenHeight"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-render-width
         "Get current render width (it considers HiDPI)"
-        GetRenderWidth
+        "GetRenderWidth"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-render-height
         "Get current render height (it considers HiDPI)"
-        GetRenderHeight
+        "GetRenderHeight"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-monitor-count
         "Get number of connected monitors"
-        GetMonitorCount
+        "GetMonitorCount"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-current-monitor
         "Get current connected monitor"
-        GetCurrentMonitor
+        "GetCurrentMonitor"
         []
-        :coffi.mem/int)
+        ::mem/int)
 
 (defcfn get-monitor-position
         "Get specified monitor position"
-        GetMonitorPosition
-        [:coffi.mem/int]
-        :raylib-clj.raylib/Vector2)
+        "GetMonitorPosition"
+        [::mem/int]
+        ::Vector2)
 
 (defcfn get-monitor-width
         "Get specified monitor width (current video mode used by monitor)"
-        GetMonitorWidth
-        [:coffi.mem/int]
-        :coffi.mem/int)
+        "GetMonitorWidth"
+        [::mem/int]
+        ::mem/int)
 
 (defcfn get-monitor-height
         "Get specified monitor height (current video mode used by monitor)"
-        GetMonitorHeight
-        [:coffi.mem/int]
-        :coffi.mem/int)
+        "GetMonitorHeight"
+        [::mem/int]
+        ::mem/int)
 
 (defcfn get-monitor-physical-width
         "Get specified monitor physical width in millimetres"
-        GetMonitorPhysicalWidth
-        [:coffi.mem/int]
-        :coffi.mem/int)
+        "GetMonitorPhysicalWidth"
+        [::mem/int]
+        ::mem/int)
 
 (defcfn get-monitor-physical-height
         "Get specified monitor physical height in millimetres"
-        GetMonitorPhysicalHeight
-        [:coffi.mem/int]
-        :coffi.mem/int)
+        "GetMonitorPhysicalHeight"
+        [::mem/int]
+        ::mem/int)
 
 (defcfn get-monitor-refresh-rate
         "Get specified monitor refresh rate"
-        GetMonitorRefreshRate
-        [:coffi.mem/int]
-        :coffi.mem/int)
+        "GetMonitorRefreshRate"
+        [::mem/int]
+        ::mem/int)
 
 (defcfn get-window-position
         "Get window position XY on monitor"
-        GetWindowPosition
+        "GetWindowPosition"
         []
-        :raylib-clj.raylib/Vector2)
+        ::Vector2)
 
 (defcfn get-window-scale-dpi
         "Get window scale DPI factor"
-        GetWindowScaleDPI
+        "GetWindowScaleDPI"
         []
-        :raylib-clj.raylib/Vector2)
+        ::Vector2)
 
 (defcfn get-monitor-name
         "Get the human-readable, UTF-8 encoded name of the primary monitor"
-        GetMonitorName
-        [:coffi.mem/int]
-        :coffi.mem/c-string)
+        "GetMonitorName"
+        [::mem/int]
+        ::mem/c-string)
 
 (defcfn set-clipboard-text
         "Set clipboard text content"
-        SetClipboardText
-        [:coffi.mem/c-string]
-        :coffi.mem/void)
+        "SetClipboardText"
+        [::mem/c-string]
+        ::mem/void)
 
 (defcfn get-clipboard-text
         "Get clipboard text content"
-        GetClipboardText
+        "GetClipboardText"
         []
-        :coffi.mem/c-string)
+        ::mem/c-string)
 
 (defcfn enable-event-waiting
         "Enable waiting for events on EndDrawing(), no automatic event polling"
-        EnableEventWaiting
+        "EnableEventWaiting"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
 (defcfn disable-event-waiting
         "Disable waiting for events on EndDrawing(), automatic events polling"
-        DisableEventWaiting
+        "DisableEventWaiting"
         []
-        :coffi.mem/void)
+        ::mem/void)
 
-;; rshapes --------------------------------------------------------------------
+;; Drawing-related functions
+(defcfn clear-background
+        "Set background color (framebuffer clear color)"
+        "ClearBackground"
+        [::Color]
+        ::mem/void)
 
-;; (defcfn draw-rectangle-rec "" DrawRectangleRec [::Rectangle ::Color]
-;; ::mem/void)
+(defcfn begin-drawing
+        "Setup canvas (framebuffer) to start drawing"
+        "BeginDrawing"
+        []
+        ::mem/void)
+
+(defcfn end-drawing
+        "End canvas drawing and swap buffers (double buffering)"
+        "EndDrawing"
+        []
+        ::mem/void)
+
+(defcfn begin-mode-2-d
+        "Begin 2D mode with custom camera (2D)"
+        "BeginMode2D"
+        [::Camera2D]
+        ::mem/void)
+
+(defcfn end-mode-2-d
+        "Ends 2D mode with custom camera"
+        "EndMode2D"
+        []
+        ::mem/void)
+
+(defcfn begin-mode-3-d
+        "Begin 3D mode with custom camera (3D)"
+        "BeginMode3D"
+        [::Camera3D]
+        ::mem/void)
+
+(defcfn end-mode-3-d
+        "Ends 3D mode and returns to default 2D orthographic mode"
+        "EndMode3D"
+        []
+        ::mem/void)
+
+(defcfn begin-texture-mode
+        "Begin drawing to render texture"
+        "BeginTextureMode"
+        [::RenderTexture2D]
+        ::mem/void)
+
+(defcfn end-texture-mode
+        "Ends drawing to render texture"
+        "EndTextureMode"
+        []
+        ::mem/void)
+
+(defcfn begin-shader-mode
+        "Begin custom shader drawing"
+        "BeginShaderMode"
+        [::Shader]
+        ::mem/void)
+
+(defcfn end-shader-mode
+        "End custom shader drawing (use default shader)"
+        "EndShaderMode"
+        []
+        ::mem/void)
+
+(defcfn begin-blend-mode
+        "Begin blending mode (alpha, additive, multiplied, subtract, custom)"
+        "BeginBlendMode"
+        [::mem/int]
+        ::mem/void)
+
+(defcfn end-blend-mode
+        "End blending mode (reset to default: alpha blending)"
+        "EndBlendMode"
+        []
+        ::mem/void)
+
+(defcfn begin-scissor-mode
+        "Begin scissor mode (define screen area for following drawing)"
+        "BeginScissorMode"
+        [::mem/int ::mem/int ::mem/int ::mem/int]
+        ::mem/void)
+
+(defcfn end-scissor-mode "End scissor mode" "EndScissorMode" [] ::mem/void)
+
+(defcfn begin-vr-stereo-mode
+        "Begin stereo rendering (requires VR simulator)"
+        "BeginVrStereoMode"
+        [::VrStereoConfig]
+        ::mem/void)
+
+(defcfn end-vr-stereo-mode
+        "End stereo rendering (requires VR simulator)"
+        "EndVrStereoMode"
+        []
+        ::mem/void)
+
+;; Timing-related functions
+(defcfn set-target-fps
+  "Set target FPS (maximum)"
+  "SetTargetFPS"
+  [::mem/int]
+  ::mem/void)
+
+(defcfn get-fps "Get current FPS" "GetFPS" [] ::mem/int)
+
+(defcfn get-frame-time
+        "Get time in seconds for last frame drawn (delta time)"
+        "GetFrameTime"
+        []
+        ::mem/float)
+
+(defcfn get-time
+        "Get elapsed time in seconds since InitWindow()"
+        "GetTime"
+        []
+        ::mem/double)
+
+;; Basic shapes drawing functions
+(defcfn draw-pixel
+        "Draw a pixel"
+        "DrawPixel"
+        [::mem/int ::mem/int ::Color]
+        ::mem/void)
+
+(defcfn draw-pixel-v
+        "Draw a pixel (Vector version)"
+        "DrawPixelV"
+        [::Vector2 ::Color]
+        ::mem/void)
+
+(defcfn draw-line
+        "Draw a line"
+        "DrawLine"
+        [::mem/int ::mem/int ::mem/int ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-line-v
+        "Draw a line (Vector version)"
+        "DrawLineV"
+        [::Vector2 ::Vector2
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-line-ex
+        "Draw a line defining thickness"
+        "DrawLineEx"
+        [::Vector2 ::Vector2 ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-line-bezier
+        "Draw a line using cubic-bezier curves in-out"
+        "DrawLineBezier"
+        [::Vector2 ::Vector2 ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-line-bezier-quad
+        "Draw line using quadratic bezier curves with a control point"
+        "DrawLineBezierQuad"
+        [::Vector2 ::Vector2
+         ::Vector2 ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-line-bezier-cubic
+        "Draw line using cubic bezier curves with 2 control points"
+        "DrawLineBezierCubic"
+        [::Vector2 ::Vector2
+         ::Vector2 ::Vector2 ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-line-strip
+        "Draw lines sequence"
+        "DrawLineStrip"
+        [[::mem/pointer ::Vector2] ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-circle
+        "Draw a color-filled circle"
+        "DrawCircle"
+        [::mem/int ::mem/int ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-circle-sector
+        "Draw a piece of a circle"
+        "DrawCircleSector"
+        [::Vector2 ::mem/float ::mem/float
+         ::mem/float ::mem/int ::Color]
+        ::mem/void)
+
+(defcfn draw-circle-sector-lines
+        "Draw circle sector outline"
+        "DrawCircleSectorLines"
+        [::Vector2 ::mem/float ::mem/float
+         ::mem/float ::mem/int ::Color]
+        ::mem/void)
+
+(defcfn draw-circle-gradient
+        "Draw a gradient-filled circle"
+        "DrawCircleGradient"
+        [::mem/int ::mem/int ::mem/float ::Color
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-circle-v
+        "Draw a color-filled circle (Vector version)"
+        "DrawCircleV"
+        [::Vector2 ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-circle-lines
+        "Draw circle outline"
+        "DrawCircleLines"
+        [::mem/int ::mem/int ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-ellipse
+        "Draw ellipse"
+        "DrawEllipse"
+        [::mem/int ::mem/int ::mem/float ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-ellipse-lines
+        "Draw ellipse outline"
+        "DrawEllipseLines"
+        [::mem/int ::mem/int ::mem/float ::mem/float
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-ring
+        "Draw ring"
+        "DrawRing"
+        [::Vector2 ::mem/float ::mem/float
+         ::mem/float ::mem/float ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-ring-lines
+        "Draw ring outline"
+        "DrawRingLines"
+        [::Vector2 ::mem/float ::mem/float
+         ::mem/float ::mem/float ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle
+        "Draw a color-filled rectangle"
+        "DrawRectangle"
+        [::mem/int ::mem/int ::mem/int ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-v
+        "Draw a color-filled rectangle (Vector version)"
+        "DrawRectangleV"
+        [::Vector2 ::Vector2
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-rec
+        "Draw a color-filled rectangle"
+        "DrawRectangleRec"
+        [::Rectangle ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-pro
+        "Draw a color-filled rectangle with pro parameters"
+        "DrawRectanglePro"
+        [::Rectangle ::Vector2
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-gradient-v
+        "Draw a vertical-gradient-filled rectangle"
+        "DrawRectangleGradientV"
+        [::mem/int ::mem/int ::mem/int ::mem/int
+         ::Color ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-gradient-h
+        "Draw a horizontal-gradient-filled rectangle"
+        "DrawRectangleGradientH"
+        [::mem/int ::mem/int ::mem/int ::mem/int
+         ::Color ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-gradient-ex
+        "Draw a gradient-filled rectangle with custom vertex colors"
+        "DrawRectangleGradientEx"
+        [::Rectangle ::Color
+         ::Color ::Color
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-lines
+        "Draw rectangle outline"
+        "DrawRectangleLines"
+        [::mem/int ::mem/int ::mem/int ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-lines-ex
+        "Draw rectangle outline with extended parameters"
+        "DrawRectangleLinesEx"
+        [::Rectangle ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-rounded
+        "Draw rectangle with rounded edges"
+        "DrawRectangleRounded"
+        [::Rectangle ::mem/float ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-rectangle-rounded-lines
+        "Draw rectangle with rounded edges outline"
+        "DrawRectangleRoundedLines"
+        [::Rectangle ::mem/float ::mem/int
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-triangle
+        "Draw a color-filled triangle (vertex in counter-clockwise order!)"
+        "DrawTriangle"
+        [::Vector2 ::Vector2
+         ::Vector2 ::Color]
+        ::mem/void)
+
+(defcfn draw-triangle-lines
+        "Draw triangle outline (vertex in counter-clockwise order!)"
+        "DrawTriangleLines"
+        [::Vector2 ::Vector2
+         ::Vector2 ::Color]
+        ::mem/void)
+
+(defcfn draw-triangle-fan
+        "Draw a triangle fan defined by points (first vertex is the center)"
+        "DrawTriangleFan"
+        [[::mem/pointer ::Vector2] ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-triangle-strip
+        "Draw a triangle strip defined by points"
+        "DrawTriangleStrip"
+        [[::mem/pointer ::Vector2] ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-poly
+        "Draw a regular polygon (Vector version)"
+        "DrawPoly"
+        [::Vector2 ::mem/int ::mem/float
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-poly-lines
+        "Draw a polygon outline of n sides"
+        "DrawPolyLines"
+        [::Vector2 ::mem/int ::mem/float
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-poly-lines-ex
+        "Draw a polygon outline of n sides with extended parameters"
+        "DrawPolyLinesEx"
+        [::Vector2 ::mem/int ::mem/float
+         ::mem/float ::mem/float ::Color]
+        ::mem/void)
+
+;; Text drawing functions
+(defcfn draw-fps
+        "Draw current FPS"
+        "DrawFPS"
+        [::mem/int ::mem/int]
+        ::mem/void)
+
+(defcfn draw-text
+        "Draw text (using default font)"
+        "DrawText"
+        [::mem/c-string ::mem/int ::mem/int ::mem/int
+         ::Color]
+        ::mem/void)
+
+(defcfn draw-text-ex
+        "Draw text using font and additional parameters"
+        "DrawTextEx"
+        [::Font ::mem/c-string ::Vector2
+         ::mem/float ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-text-pro
+        "Draw text using Font and pro parameters (rotation)"
+        "DrawTextPro"
+        [::Font ::mem/c-string ::Vector2
+         ::Vector2 ::mem/float ::mem/float
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-text-codepoint
+        "Draw one character (codepoint)"
+        "DrawTextCodepoint"
+        [::Font ::mem/int ::Vector2
+         ::mem/float ::Color]
+        ::mem/void)
+
+(defcfn draw-text-codepoints
+        "Draw multiple character (codepoint)"
+        "DrawTextCodepoints"
+        [::Font [::mem/pointer ::mem/const int]
+         ::mem/int ::Vector2 ::mem/float
+         ::mem/float ::Color]
+        ::mem/void)

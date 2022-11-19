@@ -1,19 +1,18 @@
-(ns raylib-clj.examples
+(ns raylib-clj.examples.core.basic-window
   (:require [raylib-clj.raylib :as rl]))
 
-(comment
+(defn -main [& args]
   ;; Basic window
-  (let [H 800
+  (let [H 450
         W 800]
     (rl/init-window W H "raylib [core] example - basic window")
     (rl/set-target-fps 60)
     (while (not (rl/window-should-close?))
       (rl/begin-drawing)
       (rl/clear-background rl/raywhite)
-      (rl/draw-rectangle-rec {:x 0.0 :y 100.0 :width 100.0 :height 100.0}
-                             {:r 0 :g 0 :b 0 :a 255})
+      (rl/draw-text "Congrats! You created your first window!", 190, 200, 20, rl/lightgray)
       (rl/end-drawing))
-    (rl/close-window))
+    (rl/close-window)))
 
-  ;; eject!
-  (rl/close-window))
+(comment
+  (-main))
