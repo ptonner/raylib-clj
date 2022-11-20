@@ -2,7 +2,6 @@
   (:require [raylib-clj.raylib :as rl]))
 
 (defn -main [& args]
-  ;; Basic window
   (let [H 450
         W 800]
     (rl/init-window W H "raylib [core] example - basic window")

@@ -67,8 +67,8 @@
 (defalias ::RenderTexture2D ::RenderTexture)
 
 (defalias ::Camera ::Camera3D)(defalias ::Vector2
-          (layout/with-c-layout
-            [::mem/struct [[:x ::mem/float] [:y ::mem/float]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:x ::mem/float] [:y ::mem/float]]]))
 
 (defalias ::Vector3
           (layout/with-c-layout [::mem/struct
@@ -76,245 +76,210 @@
                                   [:z ::mem/float]]]))
 
 (defalias ::Vector4
-          (layout/with-c-layout
-            [::mem/struct
-             [[:x ::mem/float] [:y ::mem/float] [:z ::mem/float]
-              [:w ::mem/float]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:x ::mem/float] [:y ::mem/float]
+                                  [:z ::mem/float] [:w ::mem/float]]]))
 
 (defalias
   ::Matrix
   (layout/with-c-layout
     [::mem/struct
-     [[:m0 ::mem/float] [:m4 ::mem/float] [:m8 ::mem/float]
-      [:m12 ::mem/float] [:m1 ::mem/float] [:m5 ::mem/float]
-      [:m9 ::mem/float] [:m13 ::mem/float] [:m2 ::mem/float]
-      [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
+     [[:m0 ::mem/float] [:m4 ::mem/float] [:m8 ::mem/float] [:m12 ::mem/float]
+      [:m1 ::mem/float] [:m5 ::mem/float] [:m9 ::mem/float] [:m13 ::mem/float]
+      [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
       [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float]
       [:m15 ::mem/float]]]))
 
 (defalias ::Color
           (layout/with-c-layout [::mem/struct
-                                 [[:r ::unsigned-char]
-                                  [:g ::unsigned-char]
-                                  [:b ::unsigned-char]
-                                  [:a ::unsigned-char]]]))
+                                 [[:r ::unsigned-char] [:g ::unsigned-char]
+                                  [:b ::unsigned-char] [:a ::unsigned-char]]]))
 
 (defalias ::Rectangle
+          (layout/with-c-layout [::mem/struct
+                                 [[:x ::mem/float] [:y ::mem/float]
+                                  [:width ::mem/float] [:height ::mem/float]]]))
+
+(defalias ::Image
           (layout/with-c-layout
             [::mem/struct
-             [[:x ::mem/float] [:y ::mem/float]
-              [:width ::mem/float] [:height ::mem/float]]]))
+             [[:data ::mem/pointer] [:width ::mem/int] [:height ::mem/int]
+              [:mipmaps ::mem/int] [:format ::mem/int]]]))
 
-(defalias
-  ::Image
-  (layout/with-c-layout [::mem/struct
-                         [[:data ::mem/pointer] [:width ::mem/int]
-                          [:height ::mem/int] [:mipmaps ::mem/int]
-                          [:format ::mem/int]]]))
-
-(defalias
-  ::Texture
-  (layout/with-c-layout [::mem/struct
-                         [[:id ::unsigned-int]
-                          [:width ::mem/int] [:height ::mem/int]
-                          [:mipmaps ::mem/int] [:format ::mem/int]]]))
+(defalias ::Texture
+          (layout/with-c-layout
+            [::mem/struct
+             [[:id ::unsigned-int] [:width ::mem/int] [:height ::mem/int]
+              [:mipmaps ::mem/int] [:format ::mem/int]]]))
 
 (defalias ::RenderTexture
-  (layout/with-c-layout [::mem/struct
-                         [[:id ::unsigned-int]
-                          [:texture ::Texture]
-                          [:depth ::Texture]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:id ::unsigned-int] [:texture ::Texture]
+                                  [:depth ::Texture]]]))
 
 (defalias ::NPatchInfo
           (layout/with-c-layout
             [::mem/struct
-             [[:source ::Rectangle] [:left ::mem/int]
-              [:top ::mem/int] [:right ::mem/int]
-              [:bottom ::mem/int] [:layout ::mem/int]]]))
+             [[:source ::Rectangle] [:left ::mem/int] [:top ::mem/int]
+              [:right ::mem/int] [:bottom ::mem/int] [:layout ::mem/int]]]))
 
-(defalias
-  ::GlyphInfo
-  (layout/with-c-layout [::mem/struct
-                         [[:value ::mem/int] [:offsetX ::mem/int]
-                          [:offsetY ::mem/int] [:advanceX ::mem/int]
-                          [:image ::Image]]]))
+(defalias ::GlyphInfo
+          (layout/with-c-layout
+            [::mem/struct
+             [[:value ::mem/int] [:offsetX ::mem/int] [:offsetY ::mem/int]
+              [:advanceX ::mem/int] [:image ::Image]]]))
 
 (defalias
   ::Font
   (layout/with-c-layout
     [::mem/struct
-     [[:baseSize ::mem/int] [:glyphCount ::mem/int]
-      [:glyphPadding ::mem/int] [:texture ::Texture2D]
-      [:recs [::mem/pointer ::Rectangle]]
+     [[:baseSize ::mem/int] [:glyphCount ::mem/int] [:glyphPadding ::mem/int]
+      [:texture ::Texture2D] [:recs [::mem/pointer ::Rectangle]]
       [:glyphs [::mem/pointer ::GlyphInfo]]]]))
 
-(defalias
-  ::Camera3D
-  (layout/with-c-layout
-    [::mem/struct
-     [[:position ::Vector3]
-      [:target ::Vector3] [:up ::Vector3]
-      [:fovy ::mem/float] [:projection ::mem/int]]]))
-
-(defalias
-  ::Camera2D
-  (layout/with-c-layout
-    [::mem/struct
-     [[:offset ::Vector2] [:target ::Vector2]
-      [:rotation ::mem/float] [:zoom ::mem/float]]]))
-
-(defalias ::Mesh
+(defalias ::Camera3D
           (layout/with-c-layout
             [::mem/struct
-             [[:vertexCount ::mem/int] [:triangleCount ::mem/int]
-              [:vertices [::mem/pointer ::mem/float]]
-              [:texcoords [::mem/pointer ::mem/float]]
-              [:texcoords2 [::mem/pointer ::mem/float]]
-              [:normals [::mem/pointer ::mem/float]]
-              [:tangents [::mem/pointer ::mem/float]]
-              [:colors ::mem/c-string]
-              [:indices [::mem/pointer ::unsigned-short]]
-              [:animVertices [::mem/pointer ::mem/float]]
-              [:animNormals [::mem/pointer ::mem/float]]
-              [:boneIds ::mem/c-string]
-              [:boneWeights [::mem/pointer ::mem/float]]
-              [:vaoId ::unsigned-int]
-              [:vboId [::mem/pointer ::unsigned-int]]]]))
+             [[:position ::Vector3] [:target ::Vector3] [:up ::Vector3]
+              [:fovy ::mem/float] [:projection ::mem/int]]]))
+
+(defalias ::Camera2D
+          (layout/with-c-layout
+            [::mem/struct
+             [[:offset ::Vector2] [:target ::Vector2] [:rotation ::mem/float]
+              [:zoom ::mem/float]]]))
+
+(defalias
+  ::Mesh
+  (layout/with-c-layout
+    [::mem/struct
+     [[:vertexCount ::mem/int] [:triangleCount ::mem/int]
+      [:vertices [::mem/pointer ::mem/float]]
+      [:texcoords [::mem/pointer ::mem/float]]
+      [:texcoords2 [::mem/pointer ::mem/float]]
+      [:normals [::mem/pointer ::mem/float]]
+      [:tangents [::mem/pointer ::mem/float]] [:colors ::mem/c-string]
+      [:indices [::mem/pointer ::unsigned-short]]
+      [:animVertices [::mem/pointer ::mem/float]]
+      [:animNormals [::mem/pointer ::mem/float]] [:boneIds ::mem/c-string]
+      [:boneWeights [::mem/pointer ::mem/float]] [:vaoId ::unsigned-int]
+      [:vboId [::mem/pointer ::unsigned-int]]]]))
 
 (defalias ::Shader
-          (layout/with-c-layout
-            [::mem/struct
-             [[:id ::unsigned-int]
-              [:locs [::mem/pointer ::mem/int]]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:id ::unsigned-int]
+                                  [:locs [::mem/pointer ::mem/int]]]]))
 
 (defalias ::MaterialMap
-          (layout/with-c-layout
-            [::mem/struct
-             [[:texture ::Texture2D]
-              [:color ::Color] [:value ::mem/float]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:texture ::Texture2D] [:color ::Color]
+                                  [:value ::mem/float]]]))
 
 (defalias ::Material
           (layout/with-c-layout
             [::mem/struct
-             [[:shader ::Shader]
-              [:maps [::mem/pointer ::MaterialMap]]
-              [:params ::mem/float[4]]]]))
+             [[:shader ::Shader] [:maps [::mem/pointer ::MaterialMap]]
+              [:params ::mem/float [4]]]]))
 
 (defalias ::Transform
-          (layout/with-c-layout [::mem/struct
-                                 [[:translation ::Vector3]
-                                  [:rotation ::Quaternion]
-                                  [:scale ::Vector3]]]))
-
-(defalias ::BoneInfo
-          (layout/with-c-layout [::mem/struct
-                                 [[:name ::mem/char[32]]
-                                  [:parent ::mem/int]]]))
-
-(defalias ::Model
           (layout/with-c-layout
             [::mem/struct
-             [[:transform ::Matrix] [:meshCount ::mem/int]
-              [:materialCount ::mem/int]
-              [:meshes [::mem/pointer ::Mesh]]
-              [:materials [::mem/pointer ::Material]]
-              [:meshMaterial [::mem/pointer ::mem/int]]
-              [:boneCount ::mem/int]
-              [:bones [::mem/pointer ::BoneInfo]]
-              [:bindPose [::mem/pointer ::Transform]]]]))
+             [[:translation ::Vector3] [:rotation ::Quaternion]
+              [:scale ::Vector3]]]))
+
+(defalias ::BoneInfo
+          (layout/with-c-layout
+            [::mem/struct [[:name ::mem/char [32]] [:parent ::mem/int]]]))
+
+(defalias
+  ::Model
+  (layout/with-c-layout
+    [::mem/struct
+     [[:transform ::Matrix] [:meshCount ::mem/int] [:materialCount ::mem/int]
+      [:meshes [::mem/pointer ::Mesh]] [:materials [::mem/pointer ::Material]]
+      [:meshMaterial [::mem/pointer ::mem/int]] [:boneCount ::mem/int]
+      [:bones [::mem/pointer ::BoneInfo]]
+      [:bindPose [::mem/pointer ::Transform]]]]))
 
 (defalias ::ModelAnimation
           (layout/with-c-layout
             [::mem/struct
              [[:boneCount ::mem/int] [:frameCount ::mem/int]
               [:bones [::mem/pointer ::BoneInfo]]
-              [:framePoses
-               [::mem/pointer
-                [::mem/pointer ::Transform]]]]]))
+              [:framePoses [::mem/pointer [::mem/pointer ::Transform]]]]]))
 
 (defalias ::Ray
-          (layout/with-c-layout [::mem/struct
-                                 [[:position ::Vector3]
-                                  [:direction ::Vector3]]]))
+          (layout/with-c-layout
+            [::mem/struct [[:position ::Vector3] [:direction ::Vector3]]]))
 
 (defalias ::RayCollision
-          (layout/with-c-layout
-            [::mem/struct
-             [[:hit ::bool] [:distance ::mem/float]
-              [:point ::Vector3]
-              [:normal ::Vector3]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:hit ::bool] [:distance ::mem/float]
+                                  [:point ::Vector3] [:normal ::Vector3]]]))
 
 (defalias ::BoundingBox
           (layout/with-c-layout [::mem/struct
-                                 [[:min ::Vector3]
-                                  [:max ::Vector3]]]))
+                                 [[:min ::Vector3] [:max ::Vector3]]]))
 
 (defalias ::Wave
-          (layout/with-c-layout [::mem/struct
-                                 [[:frameCount ::unsigned-int]
-                                  [:sampleRate ::unsigned-int]
-                                  [:sampleSize ::unsigned-int]
-                                  [:channels ::unsigned-int]
-                                  [:data ::mem/pointer]]]))
+          (layout/with-c-layout
+            [::mem/struct
+             [[:frameCount ::unsigned-int] [:sampleRate ::unsigned-int]
+              [:sampleSize ::unsigned-int] [:channels ::unsigned-int]
+              [:data ::mem/pointer]]]))
 
 (defalias ::AudioStream
           (layout/with-c-layout
             [::mem/struct
              [[:buffer [::mem/pointer ::mem/rAudioBuffer]]
               [:processor [::mem/pointer ::mem/rAudioProcessor]]
-              [:sampleRate ::unsigned-int]
-              [:sampleSize ::unsigned-int]
+              [:sampleRate ::unsigned-int] [:sampleSize ::unsigned-int]
               [:channels ::unsigned-int]]]))
 
 (defalias ::Sound
-          (layout/with-c-layout
-            [::mem/struct
-             [[:stream ::AudioStream]
-              [:frameCount ::unsigned-int]]]))
-
-(defalias ::Music
-          (layout/with-c-layout
-            [::mem/struct
-             [[:stream ::AudioStream]
-              [:frameCount ::unsigned-int]
-              [:looping ::bool] [:ctxType ::mem/int]
-              [:ctxData ::mem/pointer]]]))
+          (layout/with-c-layout [::mem/struct
+                                 [[:stream ::AudioStream]
+                                  [:frameCount ::unsigned-int]]]))
 
 (defalias
-  ::VrDeviceInfo
+  ::Music
   (layout/with-c-layout
     [::mem/struct
-     [[:hResolution ::mem/int] [:vResolution ::mem/int]
-      [:hScreenSize ::mem/float] [:vScreenSize ::mem/float]
-      [:vScreenCenter ::mem/float] [:eyeToScreenDistance ::mem/float]
-      [:lensSeparationDistance ::mem/float]
-      [:interpupillaryDistance ::mem/float]
-      [:lensDistortionValues ::mem/float[4]]
-      [:chromaAbCorrection ::mem/float[4]]]]))
+     [[:stream ::AudioStream] [:frameCount ::unsigned-int] [:looping ::bool]
+      [:ctxType ::mem/int] [:ctxData ::mem/pointer]]]))
 
-(defalias ::VrStereoConfig
+(defalias ::VrDeviceInfo
           (layout/with-c-layout
             [::mem/struct
-             [[:projection ::Matrix[2]]
-              [:viewOffset ::Matrix[2]]
-              [:leftLensCenter ::mem/float[2]]
-              [:rightLensCenter ::mem/float[2]]
-              [:leftScreenCenter ::mem/float[2]]
-              [:rightScreenCenter ::mem/float[2]]
-              [:scale ::mem/float[2]] [:scaleIn ::mem/float[2]]]]))
+             [[:hResolution ::mem/int] [:vResolution ::mem/int]
+              [:hScreenSize ::mem/float] [:vScreenSize ::mem/float]
+              [:vScreenCenter ::mem/float] [:eyeToScreenDistance ::mem/float]
+              [:lensSeparationDistance ::mem/float]
+              [:interpupillaryDistance ::mem/float]
+              [:lensDistortionValues ::mem/float [4]]
+              [:chromaAbCorrection ::mem/float [4]]]]))
 
 (defalias
-  ::FilePathList
-  (layout/with-c-layout [::mem/struct
-                         [[:capacity ::unsigned-int]
-                          [:count ::unsigned-int]
-                          [:paths [::mem/pointer ::mem/c-string]]]]))
+  ::VrStereoConfig
+  (layout/with-c-layout
+    [::mem/struct
+     [[:projection ::Matrix [2]] [:viewOffset ::Matrix [2]]
+      [:leftLensCenter ::mem/float [2]] [:rightLensCenter ::mem/float [2]]
+      [:leftScreenCenter ::mem/float [2]] [:rightScreenCenter ::mem/float [2]]
+      [:scale ::mem/float [2]] [:scaleIn ::mem/float [2]]]]))
+
+(defalias ::FilePathList
+          (layout/with-c-layout
+            [::mem/struct
+             [[:capacity ::unsigned-int] [:count ::unsigned-int]
+              [:paths [::mem/pointer ::mem/c-string]]]]))
 
 
 ;; Constants
 
 (def raywhite {:r 245, :g 245, :b 245, :a 255})
 (def lightgray {:r 200, :g 200, :b 200, :a 255})
+(def maroon {:r 190, :g 33, :b 55, :a 255})
 
 ;; Enums ----------------------------------------------------------------------
 
@@ -1247,7 +1212,8 @@
          nil)
 
 
-;; Functions -------------------------------------------------------------------
+;; Functions
+;; -------------------------------------------------------------------
 
 ;; Window-related functions
 (defcfn init-window
@@ -1615,10 +1581,10 @@
 
 ;; Timing-related functions
 (defcfn set-target-fps
-  "Set target FPS (maximum)"
-  "SetTargetFPS"
-  [::mem/int]
-  ::mem/void)
+        "Set target FPS (maximum)"
+        "SetTargetFPS"
+        [::mem/int]
+        ::mem/void)
 
 (defcfn get-fps "Get current FPS" "GetFPS" [] ::mem/int)
 
@@ -1633,6 +1599,51 @@
         "GetTime"
         []
         ::mem/double)
+
+;; Input-related functions: keyboard
+(defcfn is-key-pressed?
+        "Check if a key has been pressed once"
+        "IsKeyPressed"
+        [::mem/int]
+        ::bool)
+
+(defcfn is-key-down?
+        "Check if a key is being pressed"
+        "IsKeyDown"
+        [::mem/int]
+        ::bool)
+
+(defcfn is-key-released?
+        "Check if a key has been released once"
+        "IsKeyReleased"
+        [::mem/int]
+        ::bool)
+
+(defcfn is-key-up?
+        "Check if a key is NOT being pressed"
+        "IsKeyUp"
+        [::mem/int]
+        ::bool)
+
+(defcfn set-exit-key
+        "Set a custom key to exit program (default is ESC)"
+        "SetExitKey"
+        [::mem/int]
+        ::mem/void)
+
+(defcfn
+  get-key-pressed
+  "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty"
+  "GetKeyPressed"
+  []
+  ::mem/int)
+
+(defcfn
+  get-char-pressed
+  "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty"
+  "GetCharPressed"
+  []
+  ::mem/int)
 
 ;; Basic shapes drawing functions
 (defcfn draw-pixel
@@ -1650,79 +1661,67 @@
 (defcfn draw-line
         "Draw a line"
         "DrawLine"
-        [::mem/int ::mem/int ::mem/int ::mem/int
-         ::Color]
+        [::mem/int ::mem/int ::mem/int ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-line-v
         "Draw a line (Vector version)"
         "DrawLineV"
-        [::Vector2 ::Vector2
-         ::Color]
+        [::Vector2 ::Vector2 ::Color]
         ::mem/void)
 
 (defcfn draw-line-ex
         "Draw a line defining thickness"
         "DrawLineEx"
-        [::Vector2 ::Vector2 ::mem/float
-         ::Color]
+        [::Vector2 ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-line-bezier
         "Draw a line using cubic-bezier curves in-out"
         "DrawLineBezier"
-        [::Vector2 ::Vector2 ::mem/float
-         ::Color]
+        [::Vector2 ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-line-bezier-quad
         "Draw line using quadratic bezier curves with a control point"
         "DrawLineBezierQuad"
-        [::Vector2 ::Vector2
-         ::Vector2 ::mem/float ::Color]
+        [::Vector2 ::Vector2 ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-line-bezier-cubic
         "Draw line using cubic bezier curves with 2 control points"
         "DrawLineBezierCubic"
-        [::Vector2 ::Vector2
-         ::Vector2 ::Vector2 ::mem/float
-         ::Color]
+        [::Vector2 ::Vector2 ::Vector2 ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-line-strip
         "Draw lines sequence"
         "DrawLineStrip"
-        [[::mem/pointer ::Vector2] ::mem/int
-         ::Color]
+        [[::mem/pointer ::Vector2] ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-circle
         "Draw a color-filled circle"
         "DrawCircle"
-        [::mem/int ::mem/int ::mem/float
-         ::Color]
+        [::mem/int ::mem/int ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-circle-sector
         "Draw a piece of a circle"
         "DrawCircleSector"
-        [::Vector2 ::mem/float ::mem/float
-         ::mem/float ::mem/int ::Color]
+        [::Vector2 ::mem/float ::mem/float ::mem/float ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-circle-sector-lines
         "Draw circle sector outline"
         "DrawCircleSectorLines"
-        [::Vector2 ::mem/float ::mem/float
-         ::mem/float ::mem/int ::Color]
+        [::Vector2 ::mem/float ::mem/float ::mem/float ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-circle-gradient
         "Draw a gradient-filled circle"
         "DrawCircleGradient"
-        [::mem/int ::mem/int ::mem/float ::Color
-         ::Color]
+        [::mem/int ::mem/int ::mem/float ::Color ::Color]
         ::mem/void)
 
 (defcfn draw-circle-v
@@ -1734,52 +1733,45 @@
 (defcfn draw-circle-lines
         "Draw circle outline"
         "DrawCircleLines"
-        [::mem/int ::mem/int ::mem/float
-         ::Color]
+        [::mem/int ::mem/int ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-ellipse
         "Draw ellipse"
         "DrawEllipse"
-        [::mem/int ::mem/int ::mem/float ::mem/float
-         ::Color]
+        [::mem/int ::mem/int ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-ellipse-lines
         "Draw ellipse outline"
         "DrawEllipseLines"
-        [::mem/int ::mem/int ::mem/float ::mem/float
-         ::Color]
+        [::mem/int ::mem/int ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-ring
         "Draw ring"
         "DrawRing"
-        [::Vector2 ::mem/float ::mem/float
-         ::mem/float ::mem/float ::mem/int
+        [::Vector2 ::mem/float ::mem/float ::mem/float ::mem/float ::mem/int
          ::Color]
         ::mem/void)
 
 (defcfn draw-ring-lines
         "Draw ring outline"
         "DrawRingLines"
-        [::Vector2 ::mem/float ::mem/float
-         ::mem/float ::mem/float ::mem/int
+        [::Vector2 ::mem/float ::mem/float ::mem/float ::mem/float ::mem/int
          ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle
         "Draw a color-filled rectangle"
         "DrawRectangle"
-        [::mem/int ::mem/int ::mem/int ::mem/int
-         ::Color]
+        [::mem/int ::mem/int ::mem/int ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-v
         "Draw a color-filled rectangle (Vector version)"
         "DrawRectangleV"
-        [::Vector2 ::Vector2
-         ::Color]
+        [::Vector2 ::Vector2 ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-rec
@@ -1791,37 +1783,31 @@
 (defcfn draw-rectangle-pro
         "Draw a color-filled rectangle with pro parameters"
         "DrawRectanglePro"
-        [::Rectangle ::Vector2
-         ::mem/float ::Color]
+        [::Rectangle ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-gradient-v
         "Draw a vertical-gradient-filled rectangle"
         "DrawRectangleGradientV"
-        [::mem/int ::mem/int ::mem/int ::mem/int
-         ::Color ::Color]
+        [::mem/int ::mem/int ::mem/int ::mem/int ::Color ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-gradient-h
         "Draw a horizontal-gradient-filled rectangle"
         "DrawRectangleGradientH"
-        [::mem/int ::mem/int ::mem/int ::mem/int
-         ::Color ::Color]
+        [::mem/int ::mem/int ::mem/int ::mem/int ::Color ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-gradient-ex
         "Draw a gradient-filled rectangle with custom vertex colors"
         "DrawRectangleGradientEx"
-        [::Rectangle ::Color
-         ::Color ::Color
-         ::Color]
+        [::Rectangle ::Color ::Color ::Color ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-lines
         "Draw rectangle outline"
         "DrawRectangleLines"
-        [::mem/int ::mem/int ::mem/int ::mem/int
-         ::Color]
+        [::mem/int ::mem/int ::mem/int ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-lines-ex
@@ -1833,106 +1819,88 @@
 (defcfn draw-rectangle-rounded
         "Draw rectangle with rounded edges"
         "DrawRectangleRounded"
-        [::Rectangle ::mem/float ::mem/int
-         ::Color]
+        [::Rectangle ::mem/float ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-rectangle-rounded-lines
         "Draw rectangle with rounded edges outline"
         "DrawRectangleRoundedLines"
-        [::Rectangle ::mem/float ::mem/int
-         ::mem/float ::Color]
+        [::Rectangle ::mem/float ::mem/int ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-triangle
         "Draw a color-filled triangle (vertex in counter-clockwise order!)"
         "DrawTriangle"
-        [::Vector2 ::Vector2
-         ::Vector2 ::Color]
+        [::Vector2 ::Vector2 ::Vector2 ::Color]
         ::mem/void)
 
 (defcfn draw-triangle-lines
         "Draw triangle outline (vertex in counter-clockwise order!)"
         "DrawTriangleLines"
-        [::Vector2 ::Vector2
-         ::Vector2 ::Color]
+        [::Vector2 ::Vector2 ::Vector2 ::Color]
         ::mem/void)
 
 (defcfn draw-triangle-fan
         "Draw a triangle fan defined by points (first vertex is the center)"
         "DrawTriangleFan"
-        [[::mem/pointer ::Vector2] ::mem/int
-         ::Color]
+        [[::mem/pointer ::Vector2] ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-triangle-strip
         "Draw a triangle strip defined by points"
         "DrawTriangleStrip"
-        [[::mem/pointer ::Vector2] ::mem/int
-         ::Color]
+        [[::mem/pointer ::Vector2] ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-poly
         "Draw a regular polygon (Vector version)"
         "DrawPoly"
-        [::Vector2 ::mem/int ::mem/float
-         ::mem/float ::Color]
+        [::Vector2 ::mem/int ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-poly-lines
         "Draw a polygon outline of n sides"
         "DrawPolyLines"
-        [::Vector2 ::mem/int ::mem/float
-         ::mem/float ::Color]
+        [::Vector2 ::mem/int ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-poly-lines-ex
         "Draw a polygon outline of n sides with extended parameters"
         "DrawPolyLinesEx"
-        [::Vector2 ::mem/int ::mem/float
-         ::mem/float ::mem/float ::Color]
+        [::Vector2 ::mem/int ::mem/float ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 ;; Text drawing functions
-(defcfn draw-fps
-        "Draw current FPS"
-        "DrawFPS"
-        [::mem/int ::mem/int]
-        ::mem/void)
+(defcfn draw-fps "Draw current FPS" "DrawFPS" [::mem/int ::mem/int] ::mem/void)
 
 (defcfn draw-text
         "Draw text (using default font)"
         "DrawText"
-        [::mem/c-string ::mem/int ::mem/int ::mem/int
-         ::Color]
+        [::mem/c-string ::mem/int ::mem/int ::mem/int ::Color]
         ::mem/void)
 
 (defcfn draw-text-ex
         "Draw text using font and additional parameters"
         "DrawTextEx"
-        [::Font ::mem/c-string ::Vector2
-         ::mem/float ::mem/float ::Color]
+        [::Font ::mem/c-string ::Vector2 ::mem/float ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-text-pro
         "Draw text using Font and pro parameters (rotation)"
         "DrawTextPro"
-        [::Font ::mem/c-string ::Vector2
-         ::Vector2 ::mem/float ::mem/float
+        [::Font ::mem/c-string ::Vector2 ::Vector2 ::mem/float ::mem/float
          ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-text-codepoint
         "Draw one character (codepoint)"
         "DrawTextCodepoint"
-        [::Font ::mem/int ::Vector2
-         ::mem/float ::Color]
+        [::Font ::mem/int ::Vector2 ::mem/float ::Color]
         ::mem/void)
 
 (defcfn draw-text-codepoints
         "Draw multiple character (codepoint)"
         "DrawTextCodepoints"
-        [::Font [::mem/pointer ::mem/const int]
-         ::mem/int ::Vector2 ::mem/float
+        [::Font [::mem/pointer ::mem/const int] ::mem/int ::Vector2 ::mem/float
          ::mem/float ::Color]
         ::mem/void)
